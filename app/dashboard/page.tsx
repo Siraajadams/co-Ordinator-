@@ -51,11 +51,8 @@ export default function DashboardPage() {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (error) {
-      setMessage(error.message);
-    } else {
-      setWeddings(data || []);
-    }
+    if (error) setMessage(error.message);
+    else setWeddings(data || []);
 
     setLoading(false);
   }
@@ -92,14 +89,14 @@ export default function DashboardPage() {
     0
   );
 
+  const active = weddings.filter(
+    (w) => !["Completed", "Cancelled", "Lost"].includes(w.status || "")
+  ).length;
+
   const upcoming = weddings.filter((w) => {
     if (!w.wedding_date) return false;
     return new Date(w.wedding_date) >= new Date();
   }).length;
-
-  const active = weddings.filter(
-    (w) => !["Completed", "Cancelled", "Lost"].includes(w.status || "")
-  ).length;
 
   const pipelineGroups = useMemo(() => {
     return stages.map((stage) => ({
@@ -117,14 +114,14 @@ export default function DashboardPage() {
         <p style={styles.logoSub}>WEDDING CRM</p>
 
         <nav style={styles.nav}>
-          <a style={styles.navActive}>Dashboard</a>
-          <a style={styles.navItem}>Weddings</a>
-          <a style={styles.navItem}>Suppliers</a>
-          <a style={styles.navItem}>Budgets</a>
-          <a style={styles.navItem}>Quotes</a>
-          <a style={styles.navItem}>Approvals</a>
-          <a style={styles.navItem}>Timeline</a>
-          <a style={styles.navItem}>Reports</a>
+          <Link href="/dashboard" style={styles.navActive}>📊 Dashboard</Link>
+          <a href="#weddings" style={styles.navItem}>💍 Weddings</a>
+          <a href="#suppliers" style={styles.navItem}>🌸 Suppliers</a>
+          <a href="#budgets" style={styles.navItem}>💰 Budgets</a>
+          <a href="#quotes" style={styles.navItem}>📄 Quotes</a>
+          <a href="#approvals" style={styles.navItem}>✅ Approvals</a>
+          <a href="#timeline" style={styles.navItem}>📅 Timeline</a>
+          <a href="#reports" style={styles.navItem}>📈 Reports</a>
         </nav>
 
         <Link href="/register-wedding" style={styles.newButton}>
@@ -138,7 +135,7 @@ export default function DashboardPage() {
             <p style={styles.eyebrow}>Planner Workspace</p>
             <h2 style={styles.title}>Wedding Coordination Dashboard</h2>
             <p style={styles.subtitle}>
-              Manage weddings, suppliers, budgets, quotes and approval stages.
+              Manage weddings, suppliers, budgets, quotes and approvals.
             </p>
           </div>
 
@@ -253,6 +250,117 @@ export default function DashboardPage() {
             </div>
           )}
         </section>
+
+        <section id="weddings" style={styles.section}>
+          <h3 style={styles.sectionTitle}>Wedding Management</h3>
+          <p style={styles.sectionSub}>
+            All registered weddings and client profiles.
+          </p>
+
+          <div style={styles.tableWrap}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th>Couple</th>
+                  <th>Date</th>
+                  <th>Venue</th>
+                  <th>Guests</th>
+                  <th>Budget</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((w) => (
+                  <tr key={w.id}>
+                    <td>{w.bride_name} & {w.groom_name}</td>
+                    <td>{formatDate(w.wedding_date)}</td>
+                    <td>{w.venue_name || "TBC"}</td>
+                    <td>{w.guest_count || 0}</td>
+                    <td>R {Number(w.total_budget || 0).toLocaleString()}</td>
+                    <td>{w.planning_stage || w.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="suppliers" style={styles.section}>
+          <h3 style={styles.sectionTitle}>Supplier CRM</h3>
+          <p style={styles.sectionSub}>
+            Manage florists, caterers, photographers, venues and musicians.
+          </p>
+
+          <div style={styles.grid3}>
+            {[
+              "🌸 Florists",
+              "🍽 Caterers",
+              "📷 Photographers",
+              "🎻 Entertainment",
+              "🏛 Venues",
+              "🎂 Cakes",
+            ].map((item) => (
+              <div key={item} style={styles.miniCard}>{item}</div>
+            ))}
+          </div>
+        </section>
+
+        <section id="budgets" style={styles.section}>
+          <h3 style={styles.sectionTitle}>Budget Dashboard</h3>
+          <p style={styles.sectionSub}>
+            Track estimated budget, approved spend and remaining balance.
+          </p>
+
+          <div style={styles.statsGrid}>
+            <StatCard label="Estimated Budget" value={`R ${totalBudget.toLocaleString()}`} />
+            <StatCard label="Approved Spend" value="R 0" />
+            <StatCard label="Outstanding Quotes" value="0" />
+            <StatCard label="Remaining Budget" value={`R ${totalBudget.toLocaleString()}`} />
+          </div>
+        </section>
+
+        <section id="quotes" style={styles.section}>
+          <h3 style={styles.sectionTitle}>Supplier Quotes</h3>
+          <p style={styles.sectionSub}>
+            Review quote status and supplier approvals.
+          </p>
+        </section>
+
+        <section id="approvals" style={styles.section}>
+          <h3 style={styles.sectionTitle}>Client Approvals</h3>
+          <p style={styles.sectionSub}>
+            Pending approvals, rejected quotes and approved wedding items.
+          </p>
+        </section>
+
+        <section id="timeline" style={styles.section}>
+          <h3 style={styles.sectionTitle}>Wedding Timeline</h3>
+          <p style={styles.sectionSub}>
+            Planning checklist and key event dates.
+          </p>
+
+          <div style={styles.timeline}>
+            {[
+              "Venue confirmed",
+              "Supplier quotes requested",
+              "Client approvals",
+              "Final supplier payments",
+              "Wedding day coordination",
+            ].map((item, index) => (
+              <div key={item} style={styles.timelineItem}>
+                <strong>{index + 1}</strong>
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="reports" style={styles.section}>
+          <h3 style={styles.sectionTitle}>Business Reports</h3>
+          <p style={styles.sectionSub}>
+            Income statement, budget summary and wedding profitability.
+          </p>
+        </section>
       </section>
     </main>
   );
@@ -282,8 +390,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     background: "#fff8f6",
     color: "#2f2933",
-    fontFamily:
-      "Inter, Arial, Helvetica, sans-serif",
+    fontFamily: "Arial, Helvetica, sans-serif",
   },
   sidebar: {
     width: 260,
@@ -293,6 +400,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     position: "sticky",
     top: 0,
     height: "100vh",
+    flexShrink: 0,
   },
   logo: {
     fontFamily: "Georgia, serif",
@@ -315,14 +423,16 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "12px 14px",
     borderRadius: 14,
     color: "#6b5c64",
-    fontWeight: 600,
+    fontWeight: 700,
+    textDecoration: "none",
   },
   navActive: {
     padding: "12px 14px",
     borderRadius: 14,
     background: "#f9e4e7",
     color: "#9b2f43",
-    fontWeight: 700,
+    fontWeight: 800,
+    textDecoration: "none",
   },
   newButton: {
     display: "block",
@@ -333,6 +443,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "14px 16px",
     borderRadius: 16,
     fontWeight: 800,
+    textDecoration: "none",
   },
   content: {
     flex: 1,
@@ -386,7 +497,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   statsGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(4, minmax(160px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
     gap: 18,
     marginBottom: 24,
   },
@@ -413,6 +524,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     border: "1px solid #f1d5d8",
     borderRadius: 28,
     padding: 24,
+    marginBottom: 24,
     boxShadow: "0 15px 35px rgba(143, 52, 69, 0.08)",
   },
   sectionHeader: {
@@ -427,7 +539,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     margin: 0,
   },
   sectionSub: {
-    margin: "6px 0 0",
+    margin: "6px 0 20px",
     color: "#7c6971",
   },
   refreshButton: {
@@ -455,7 +567,6 @@ const styles: { [key: string]: React.CSSProperties } = {
   columnHeader: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
     marginBottom: 14,
     color: "#8f3445",
     fontWeight: 900,
@@ -473,7 +584,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: 20,
     padding: 16,
     marginBottom: 14,
-    boxShadow: "0 8px 20px rgba(143, 52, 69, 0.08)",
   },
   cardTop: {
     display: "flex",
@@ -516,6 +626,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: 12,
     fontWeight: 800,
     fontSize: 13,
+    textDecoration: "none",
   },
   stageSelect: {
     flex: 1,
@@ -523,5 +634,38 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: 12,
     padding: "9px 10px",
     fontWeight: 700,
+  },
+  grid3: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+    gap: 16,
+  },
+  miniCard: {
+    background: "#fff8f6",
+    border: "1px solid #f1d5d8",
+    borderRadius: 18,
+    padding: 20,
+    fontWeight: 800,
+    color: "#8f3445",
+  },
+  tableWrap: {
+    overflowX: "auto",
+  },
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+  },
+  timeline: {
+    display: "grid",
+    gap: 12,
+  },
+  timelineItem: {
+    display: "flex",
+    gap: 14,
+    alignItems: "center",
+    background: "#fff8f6",
+    border: "1px solid #f1d5d8",
+    borderRadius: 16,
+    padding: 16,
   },
 };
