@@ -10,7 +10,6 @@ type Wedding = {
   groom_name: string;
   contact_name?: string;
   email?: string;
-  mobile?: string;
   wedding_date?: string;
   venue_name?: string;
   guest_count?: number;
@@ -18,7 +17,6 @@ type Wedding = {
   total_budget?: number;
   status?: string;
   planning_stage?: string;
-  created_at?: string;
 };
 
 type Supplier = {
@@ -27,9 +25,6 @@ type Supplier = {
   category: string;
   item: string;
   supplier_name: string;
-  contact_person?: string;
-  email?: string;
-  mobile?: string;
   deposit_paid: string;
   cost_estimate: number;
   deposit_amount: number;
@@ -41,7 +36,18 @@ type Supplier = {
   due_date?: string;
   client_approval_status?: string;
   client_approval_notes?: string;
-  client_approved_at?: string;
+};
+
+type TimelineItem = {
+  id: string;
+  wedding_id: string;
+  task_title: string;
+  task_type?: string;
+  frequency?: string;
+  due_date?: string;
+  assigned_to?: string;
+  status?: string;
+  notes?: string;
 };
 
 const stages = [
@@ -87,6 +93,7 @@ const approvalStatuses = [
 export default function DashboardPage() {
   const [weddings, setWeddings] = useState<Wedding[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [timelineItems, setTimelineItems] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
@@ -97,9 +104,6 @@ export default function DashboardPage() {
     category: "Venue",
     item: "Venue",
     supplier_name: "",
-    contact_person: "",
-    email: "",
-    mobile: "",
     deposit_paid: "No",
     cost_estimate: "",
     deposit_amount: "",
@@ -110,6 +114,17 @@ export default function DashboardPage() {
     notes: "",
     action_required: "",
     due_date: "",
+  });
+
+  const [timelineForm, setTimelineForm] = useState({
+    wedding_id: "",
+    task_title: "",
+    task_type: "Planning",
+    frequency: "Weekly",
+    due_date: "",
+    assigned_to: "",
+    status: "Not Started",
+    notes: "",
   });
 
   useEffect(() => {
@@ -129,11 +144,18 @@ export default function DashboardPage() {
       .select("*")
       .order("created_at", { ascending: false });
 
+    const { data: timelineData, error: timelineError } = await supabase
+      .from("wedding_timeline")
+      .select("*")
+      .order("due_date", { ascending: true });
+
     if (weddingError) setMessage(weddingError.message);
     if (supplierError) setMessage(supplierError.message);
+    if (timelineError) setMessage(timelineError.message);
 
     setWeddings(weddingData || []);
     setSuppliers(supplierData || []);
+    setTimelineItems(timelineData || []);
     setLoading(false);
   }
 
@@ -143,30 +165,18 @@ export default function DashboardPage() {
       .update({ status: stage, planning_stage: stage })
       .eq("id", id);
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
+    if (error) return alert(error.message);
     loadData();
   }
 
   async function addSupplier(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!supplierForm.wedding_id) {
-      alert("Please select a wedding.");
-      return;
-    }
-
     const { error } = await supabase.from("suppliers").insert({
       wedding_id: supplierForm.wedding_id,
       category: supplierForm.category,
       item: supplierForm.item,
       supplier_name: supplierForm.supplier_name,
-      contact_person: supplierForm.contact_person,
-      email: supplierForm.email,
-      mobile: supplierForm.mobile,
       deposit_paid: supplierForm.deposit_paid,
       cost_estimate: Number(supplierForm.cost_estimate || 0),
       deposit_amount: Number(supplierForm.deposit_amount || 0),
@@ -179,19 +189,13 @@ export default function DashboardPage() {
       due_date: supplierForm.due_date || null,
     });
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+    if (error) return alert(error.message);
 
     setSupplierForm({
       wedding_id: "",
       category: "Venue",
       item: "Venue",
       supplier_name: "",
-      contact_person: "",
-      email: "",
-      mobile: "",
       deposit_paid: "No",
       cost_estimate: "",
       deposit_amount: "",
@@ -207,17 +211,39 @@ export default function DashboardPage() {
     loadData();
   }
 
+  async function addTimelineTask(e: React.FormEvent) {
+    e.preventDefault();
+
+    const { error } = await supabase.from("wedding_timeline").insert({
+      wedding_id: timelineForm.wedding_id,
+      task_title: timelineForm.task_title,
+      task_type: timelineForm.task_type,
+      frequency: timelineForm.frequency,
+      due_date: timelineForm.due_date || null,
+      assigned_to: timelineForm.assigned_to,
+      status: timelineForm.status,
+      notes: timelineForm.notes,
+    });
+
+    if (error) return alert(error.message);
+
+    setTimelineForm({
+      wedding_id: "",
+      task_title: "",
+      task_type: "Planning",
+      frequency: "Weekly",
+      due_date: "",
+      assigned_to: "",
+      status: "Not Started",
+      notes: "",
+    });
+
+    loadData();
+  }
+
   async function updateSupplierStatus(id: string, status: string) {
-    const { error } = await supabase
-      .from("suppliers")
-      .update({ status })
-      .eq("id", id);
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
+    const { error } = await supabase.from("suppliers").update({ status }).eq("id", id);
+    if (error) return alert(error.message);
     loadData();
   }
 
@@ -231,11 +257,17 @@ export default function DashboardPage() {
       })
       .eq("id", id);
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+    if (error) return alert(error.message);
+    loadData();
+  }
 
+  async function updateTimelineStatus(id: string, status: string) {
+    const { error } = await supabase
+      .from("wedding_timeline")
+      .update({ status })
+      .eq("id", id);
+
+    if (error) return alert(error.message);
     loadData();
   }
 
@@ -261,26 +293,10 @@ export default function DashboardPage() {
     return true;
   });
 
-  const totalWeddingBudget = weddings.reduce(
-    (sum, w) => sum + Number(w.total_budget || 0),
-    0
-  );
-
-  const supplierEstimate = suppliers.reduce(
-    (sum, s) => sum + Number(s.cost_estimate || 0),
-    0
-  );
-
-  const supplierPaid = suppliers.reduce(
-    (sum, s) => sum + Number(s.paid || 0),
-    0
-  );
-
-  const supplierBalance = suppliers.reduce(
-    (sum, s) => sum + Number(s.balance_owing || 0),
-    0
-  );
-
+  const totalWeddingBudget = weddings.reduce((sum, w) => sum + Number(w.total_budget || 0), 0);
+  const supplierEstimate = suppliers.reduce((sum, s) => sum + Number(s.cost_estimate || 0), 0);
+  const supplierPaid = suppliers.reduce((sum, s) => sum + Number(s.paid || 0), 0);
+  const supplierBalance = suppliers.reduce((sum, s) => sum + Number(s.balance_owing || 0), 0);
   const awaitingQuotes = suppliers.filter((s) => s.status === "Awaiting Quote").length;
   const depositsDue = suppliers.filter((s) => s.deposit_paid !== "Yes").length;
   const pendingApprovals = suppliers.filter((s) => (s.client_approval_status || "Pending") === "Pending").length;
@@ -312,9 +328,7 @@ export default function DashboardPage() {
           <a href="#reports" style={styles.navItem}>📈 Reports</a>
         </nav>
 
-        <Link href="/register-wedding" style={styles.newButton}>
-          + New Wedding
-        </Link>
+        <Link href="/register-wedding" style={styles.newButton}>+ New Wedding</Link>
       </aside>
 
       <section style={styles.content}>
@@ -322,9 +336,7 @@ export default function DashboardPage() {
           <div>
             <p style={styles.eyebrow}>Version 2</p>
             <h2 style={styles.title}>Wedding Project Management CRM</h2>
-            <p style={styles.subtitle}>
-              Manage weddings, suppliers, payments, client approvals and balances.
-            </p>
+            <p style={styles.subtitle}>Manage suppliers, payments, approvals and timeline tasks.</p>
           </div>
 
           <input
@@ -364,36 +376,25 @@ export default function DashboardPage() {
                     <strong>{group.items.length}</strong>
                   </div>
 
-                  {group.items.length === 0 && (
-                    <div style={styles.emptyCard}>No weddings</div>
-                  )}
+                  {group.items.length === 0 && <div style={styles.emptyCard}>No weddings</div>}
 
                   {group.items.map((wedding) => (
                     <div key={wedding.id} style={styles.card}>
                       <span style={styles.badge}>{wedding.theme || "Wedding"}</span>
-                      <h4 style={styles.cardTitle}>
-                        {wedding.bride_name} & {wedding.groom_name}
-                      </h4>
+                      <h4 style={styles.cardTitle}>{wedding.bride_name} & {wedding.groom_name}</h4>
                       <p style={styles.cardText}><strong>Date:</strong> {formatDate(wedding.wedding_date)}</p>
                       <p style={styles.cardText}><strong>Venue:</strong> {wedding.venue_name || "TBC"}</p>
                       <p style={styles.cardText}><strong>Guests:</strong> {wedding.guest_count || 0}</p>
-                      <p style={styles.cardText}>
-                        <strong>Budget:</strong> R {Number(wedding.total_budget || 0).toLocaleString()}
-                      </p>
+                      <p style={styles.cardText}><strong>Budget:</strong> R {Number(wedding.total_budget || 0).toLocaleString()}</p>
 
                       <div style={styles.cardActions}>
-                        <Link href={`/weddings/${wedding.id}`} style={styles.openButton}>
-                          Open
-                        </Link>
-
+                        <Link href={`/weddings/${wedding.id}`} style={styles.openButton}>Open</Link>
                         <select
                           value={wedding.planning_stage || wedding.status || "New Enquiry"}
                           onChange={(e) => updateStage(wedding.id, e.target.value)}
                           style={styles.stageSelect}
                         >
-                          {stages.map((stage) => (
-                            <option key={stage}>{stage}</option>
-                          ))}
+                          {stages.map((stage) => <option key={stage}>{stage}</option>)}
                         </select>
                       </div>
                     </div>
@@ -438,9 +439,7 @@ export default function DashboardPage() {
 
         <section id="suppliers" style={styles.section}>
           <h3 style={styles.sectionTitle}>Supplier CRM</h3>
-          <p style={styles.sectionSub}>
-            Spreadsheet-style supplier tracker with payments, notes, actions and client approvals.
-          </p>
+          <p style={styles.sectionSub}>Outstanding payments and deposits due filter this supplier table below.</p>
 
           <div style={styles.supplierStats}>
             <StatCard label="Total Suppliers" value={suppliers.length} />
@@ -472,138 +471,39 @@ export default function DashboardPage() {
           </div>
 
           <form onSubmit={addSupplier} style={styles.supplierForm}>
-            <select
-              value={supplierForm.wedding_id}
-              onChange={(e) => setSupplierForm({ ...supplierForm, wedding_id: e.target.value })}
-              style={styles.input}
-              required
-            >
+            <select value={supplierForm.wedding_id} onChange={(e) => setSupplierForm({ ...supplierForm, wedding_id: e.target.value })} style={styles.input} required>
               <option value="">Select Wedding</option>
-              {weddings.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.bride_name} & {w.groom_name}
-                </option>
-              ))}
+              {weddings.map((w) => <option key={w.id} value={w.id}>{w.bride_name} & {w.groom_name}</option>)}
             </select>
 
-            <select
-              value={supplierForm.category}
-              onChange={(e) =>
-                setSupplierForm({
-                  ...supplierForm,
-                  category: e.target.value,
-                  item: e.target.value,
-                })
-              }
-              style={styles.input}
-            >
-              {categories.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
+            <select value={supplierForm.category} onChange={(e) => setSupplierForm({ ...supplierForm, category: e.target.value, item: e.target.value })} style={styles.input}>
+              {categories.map((c) => <option key={c}>{c}</option>)}
             </select>
 
-            <input
-              placeholder="Item"
-              value={supplierForm.item}
-              onChange={(e) => setSupplierForm({ ...supplierForm, item: e.target.value })}
-              style={styles.input}
-              required
-            />
+            <input placeholder="Item" value={supplierForm.item} onChange={(e) => setSupplierForm({ ...supplierForm, item: e.target.value })} style={styles.input} required />
+            <input placeholder="Supplier" value={supplierForm.supplier_name} onChange={(e) => setSupplierForm({ ...supplierForm, supplier_name: e.target.value })} style={styles.input} />
 
-            <input
-              placeholder="Supplier"
-              value={supplierForm.supplier_name}
-              onChange={(e) => setSupplierForm({ ...supplierForm, supplier_name: e.target.value })}
-              style={styles.input}
-            />
-
-            <select
-              value={supplierForm.deposit_paid}
-              onChange={(e) => setSupplierForm({ ...supplierForm, deposit_paid: e.target.value })}
-              style={styles.input}
-            >
+            <select value={supplierForm.deposit_paid} onChange={(e) => setSupplierForm({ ...supplierForm, deposit_paid: e.target.value })} style={styles.input}>
               <option>No</option>
               <option>Yes</option>
             </select>
 
-            <input
-              placeholder="Cost Estimate"
-              value={supplierForm.cost_estimate}
-              onChange={(e) => setSupplierForm({ ...supplierForm, cost_estimate: e.target.value })}
-              style={styles.input}
-            />
+            <input placeholder="Cost Estimate" value={supplierForm.cost_estimate} onChange={(e) => setSupplierForm({ ...supplierForm, cost_estimate: e.target.value })} style={styles.input} />
+            <input placeholder="Deposit Amount" value={supplierForm.deposit_amount} onChange={(e) => setSupplierForm({ ...supplierForm, deposit_amount: e.target.value })} style={styles.input} />
+            <input placeholder="Paid" value={supplierForm.paid} onChange={(e) => setSupplierForm({ ...supplierForm, paid: e.target.value })} style={styles.input} />
 
-            <input
-              placeholder="Deposit Amount"
-              value={supplierForm.deposit_amount}
-              onChange={(e) => setSupplierForm({ ...supplierForm, deposit_amount: e.target.value })}
-              style={styles.input}
-            />
-
-            <input
-              placeholder="Paid"
-              value={supplierForm.paid}
-              onChange={(e) => setSupplierForm({ ...supplierForm, paid: e.target.value })}
-              style={styles.input}
-            />
-
-            <select
-              value={supplierForm.status}
-              onChange={(e) => setSupplierForm({ ...supplierForm, status: e.target.value })}
-              style={styles.input}
-            >
-              {statuses.map((s) => (
-                <option key={s}>{s}</option>
-              ))}
+            <select value={supplierForm.status} onChange={(e) => setSupplierForm({ ...supplierForm, status: e.target.value })} style={styles.input}>
+              {statuses.map((s) => <option key={s}>{s}</option>)}
             </select>
 
-            <select
-              value={supplierForm.client_approval_status}
-              onChange={(e) =>
-                setSupplierForm({
-                  ...supplierForm,
-                  client_approval_status: e.target.value,
-                })
-              }
-              style={styles.input}
-            >
-              {approvalStatuses.map((s) => (
-                <option key={s}>{s}</option>
-              ))}
+            <select value={supplierForm.client_approval_status} onChange={(e) => setSupplierForm({ ...supplierForm, client_approval_status: e.target.value })} style={styles.input}>
+              {approvalStatuses.map((s) => <option key={s}>{s}</option>)}
             </select>
 
-            <input
-              type="date"
-              value={supplierForm.due_date}
-              onChange={(e) => setSupplierForm({ ...supplierForm, due_date: e.target.value })}
-              style={styles.input}
-            />
-
-            <input
-              placeholder="Action Required"
-              value={supplierForm.action_required}
-              onChange={(e) => setSupplierForm({ ...supplierForm, action_required: e.target.value })}
-              style={styles.inputWide}
-            />
-
-            <input
-              placeholder="Client Approval Notes"
-              value={supplierForm.client_approval_notes}
-              onChange={(e) =>
-                setSupplierForm({
-                  ...supplierForm,
-                  client_approval_notes: e.target.value,
-                })
-              }
-              style={styles.inputWide}
-            />
-
-            <textarea
-              placeholder="Notes"
-              value={supplierForm.notes}
-              onChange={(e) => setSupplierForm({ ...supplierForm, notes: e.target.value })}
-              style={styles.textarea}
-            />
+            <input type="date" value={supplierForm.due_date} onChange={(e) => setSupplierForm({ ...supplierForm, due_date: e.target.value })} style={styles.input} />
+            <input placeholder="Action Required" value={supplierForm.action_required} onChange={(e) => setSupplierForm({ ...supplierForm, action_required: e.target.value })} style={styles.inputWide} />
+            <input placeholder="Client Approval Notes" value={supplierForm.client_approval_notes} onChange={(e) => setSupplierForm({ ...supplierForm, client_approval_notes: e.target.value })} style={styles.inputWide} />
+            <textarea placeholder="Notes" value={supplierForm.notes} onChange={(e) => setSupplierForm({ ...supplierForm, notes: e.target.value })} style={styles.textarea} />
 
             <button style={styles.addButton}>+ Add Supplier Item</button>
           </form>
@@ -635,25 +535,13 @@ export default function DashboardPage() {
                     <td>R {Number(s.paid || 0).toLocaleString()}</td>
                     <td>R {Number(s.balance_owing || 0).toLocaleString()}</td>
                     <td>
-                      <select
-                        value={s.status}
-                        onChange={(e) => updateSupplierStatus(s.id, e.target.value)}
-                        style={statusStyle(s.status)}
-                      >
-                        {statuses.map((status) => (
-                          <option key={status}>{status}</option>
-                        ))}
+                      <select value={s.status} onChange={(e) => updateSupplierStatus(s.id, e.target.value)} style={statusStyle(s.status)}>
+                        {statuses.map((status) => <option key={status}>{status}</option>)}
                       </select>
                     </td>
                     <td>
-                      <select
-                        value={s.client_approval_status || "Pending"}
-                        onChange={(e) => updateClientApproval(s.id, e.target.value)}
-                        style={approvalStyle(s.client_approval_status || "Pending")}
-                      >
-                        {approvalStatuses.map((status) => (
-                          <option key={status}>{status}</option>
-                        ))}
+                      <select value={s.client_approval_status || "Pending"} onChange={(e) => updateClientApproval(s.id, e.target.value)} style={approvalStyle(s.client_approval_status || "Pending")}>
+                        {approvalStatuses.map((status) => <option key={status}>{status}</option>)}
                       </select>
                     </td>
                     <td>{s.due_date || "-"}</td>
@@ -680,17 +568,84 @@ export default function DashboardPage() {
 
         <section id="quotes" style={styles.section}>
           <h3 style={styles.sectionTitle}>Supplier Quotes</h3>
-          <p style={styles.sectionSub}>Quotes can be tracked through supplier status and notes.</p>
+          <p style={styles.sectionSub}>Quotes are tracked through supplier status, notes and approval status.</p>
         </section>
 
         <section id="approvals" style={styles.section}>
           <h3 style={styles.sectionTitle}>Client Approvals</h3>
-          <p style={styles.sectionSub}>Pending approvals, rejected quotes and approved wedding items.</p>
+          <p style={styles.sectionSub}>Client approval status is managed per supplier item in the Supplier CRM table.</p>
         </section>
 
         <section id="timeline" style={styles.section}>
-          <h3 style={styles.sectionTitle}>Wedding Timeline</h3>
-          <p style={styles.sectionSub}>Planning checklist and key event dates.</p>
+          <h3 style={styles.sectionTitle}>Wedding Timeline Tracker</h3>
+          <p style={styles.sectionSub}>Track weekly and monthly planning tasks for each wedding.</p>
+
+          <form onSubmit={addTimelineTask} style={styles.supplierForm}>
+            <select value={timelineForm.wedding_id} onChange={(e) => setTimelineForm({ ...timelineForm, wedding_id: e.target.value })} style={styles.input} required>
+              <option value="">Select Wedding</option>
+              {weddings.map((w) => <option key={w.id} value={w.id}>{w.bride_name} & {w.groom_name}</option>)}
+            </select>
+
+            <input placeholder="Task title" value={timelineForm.task_title} onChange={(e) => setTimelineForm({ ...timelineForm, task_title: e.target.value })} style={styles.input} required />
+
+            <select value={timelineForm.frequency} onChange={(e) => setTimelineForm({ ...timelineForm, frequency: e.target.value })} style={styles.input}>
+              <option>Weekly</option>
+              <option>Monthly</option>
+              <option>Once-off</option>
+              <option>Final Week</option>
+              <option>Wedding Day</option>
+            </select>
+
+            <input type="date" value={timelineForm.due_date} onChange={(e) => setTimelineForm({ ...timelineForm, due_date: e.target.value })} style={styles.input} />
+
+            <select value={timelineForm.status} onChange={(e) => setTimelineForm({ ...timelineForm, status: e.target.value })} style={styles.input}>
+              <option>Not Started</option>
+              <option>In Progress</option>
+              <option>Waiting for Client</option>
+              <option>Completed</option>
+              <option>Overdue</option>
+            </select>
+
+            <input placeholder="Assigned to" value={timelineForm.assigned_to} onChange={(e) => setTimelineForm({ ...timelineForm, assigned_to: e.target.value })} style={styles.input} />
+            <textarea placeholder="Notes" value={timelineForm.notes} onChange={(e) => setTimelineForm({ ...timelineForm, notes: e.target.value })} style={styles.textarea} />
+
+            <button style={styles.addButton}>+ Add Timeline Task</button>
+          </form>
+
+          <div style={styles.tableWrap}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th>Task</th>
+                  <th>Frequency</th>
+                  <th>Due Date</th>
+                  <th>Assigned To</th>
+                  <th>Status</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {timelineItems.map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.task_title}</td>
+                    <td>{item.frequency}</td>
+                    <td>{item.due_date || "-"}</td>
+                    <td>{item.assigned_to || "-"}</td>
+                    <td>
+                      <select value={item.status || "Not Started"} onChange={(e) => updateTimelineStatus(item.id, e.target.value)} style={statusStyle(item.status || "Not Started")}>
+                        <option>Not Started</option>
+                        <option>In Progress</option>
+                        <option>Waiting for Client</option>
+                        <option>Completed</option>
+                        <option>Overdue</option>
+                      </select>
+                    </td>
+                    <td>{item.notes}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
 
         <section id="reports" style={styles.section}>
@@ -721,35 +676,22 @@ function formatDate(date?: string) {
 }
 
 function statusStyle(status: string): React.CSSProperties {
-  const base: React.CSSProperties = {
-    border: "none",
-    borderRadius: 999,
-    padding: "8px 10px",
-    fontWeight: 800,
-  };
-
+  const base: React.CSSProperties = { border: "none", borderRadius: 999, padding: "8px 10px", fontWeight: 800 };
   if (status === "Completed") return { ...base, background: "#dcfce7", color: "#166534" };
   if (status === "Deposit Paid") return { ...base, background: "#ffedd5", color: "#9a3412" };
   if (status === "Awaiting Quote") return { ...base, background: "#fef9c3", color: "#854d0e" };
   if (status === "Booked") return { ...base, background: "#dbeafe", color: "#1e40af" };
-  if (status === "Over Budget") return { ...base, background: "#fee2e2", color: "#991b1b" };
-
+  if (status === "Over Budget" || status === "Overdue") return { ...base, background: "#fee2e2", color: "#991b1b" };
+  if (status === "In Progress") return { ...base, background: "#e0f2fe", color: "#075985" };
   return { ...base, background: "#f1f5f9", color: "#475569" };
 }
 
 function approvalStyle(status: string): React.CSSProperties {
-  const base: React.CSSProperties = {
-    border: "none",
-    borderRadius: 999,
-    padding: "8px 10px",
-    fontWeight: 800,
-  };
-
+  const base: React.CSSProperties = { border: "none", borderRadius: 999, padding: "8px 10px", fontWeight: 800 };
   if (status === "Approved by Client") return { ...base, background: "#dcfce7", color: "#166534" };
   if (status === "Rejected by Client") return { ...base, background: "#fee2e2", color: "#991b1b" };
   if (status === "Changes Requested") return { ...base, background: "#ffedd5", color: "#9a3412" };
   if (status === "Sent to Client") return { ...base, background: "#dbeafe", color: "#1e40af" };
-
   return { ...base, background: "#fef9c3", color: "#854d0e" };
 }
 
