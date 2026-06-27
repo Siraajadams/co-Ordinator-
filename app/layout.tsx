@@ -1,9 +1,8 @@
-import type { Metadata } from "next";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "Wedding Coordinator",
-  description: "Wedding planning CRM and budget management platform",
+export const metadata = {
+  title: "Co-Ordinator Weddings",
+  description: "Wedding planning CRM and registration platform",
 };
 
 export default function RootLayout({
