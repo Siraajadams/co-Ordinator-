@@ -79,7 +79,7 @@ export default function RegisterWeddingPage() {
           </span>
         </Link>
 
-        <nav>
+        <nav className="topNav">
           <Link href="/">Home</Link>
           <Link href="/login">Planner Login</Link>
         </nav>
@@ -88,8 +88,10 @@ export default function RegisterWeddingPage() {
       <section className="layout">
         <aside className="intro">
           <p className="eyebrow">Luxury Wedding Planning CRM</p>
+
           <h1>Register your wedding</h1>
-          <p>
+
+          <p className="introText">
             Complete this short registration. Your wedding will be created as a
             CRM profile for the planner to manage quotes, suppliers, budgets and
             approvals.
@@ -99,8 +101,8 @@ export default function RegisterWeddingPage() {
             <div className="bigFlower">🌸</div>
             <h3>Peonies & Blush</h3>
             <p>
-              Soft florals, champagne tones, romantic styling and luxury supplier
-              coordination.
+              Soft florals, champagne tones, romantic styling and luxury
+              supplier coordination.
             </p>
           </div>
 
@@ -120,6 +122,7 @@ export default function RegisterWeddingPage() {
 
         <form onSubmit={submitWedding} className="formCard">
           <h2>Register Your Wedding</h2>
+
           <p className="stepText">Step {step} of 4</p>
 
           <div className="bar">
@@ -129,12 +132,46 @@ export default function RegisterWeddingPage() {
           {step === 1 && (
             <>
               <Section title="Couple Details" />
+
               <div className="grid">
-                <Input label="Bride Name" name="bride_name" value={form.bride_name} update={update} required />
-                <Input label="Groom Name" name="groom_name" value={form.groom_name} update={update} required />
-                <Input label="Contact Person" name="contact_name" value={form.contact_name} update={update} required />
-                <Input label="Email" name="email" value={form.email} update={update} required />
-                <Input label="Mobile" name="mobile" value={form.mobile} update={update} />
+                <Input
+                  label="Bride Name"
+                  name="bride_name"
+                  value={form.bride_name}
+                  update={update}
+                  required
+                />
+
+                <Input
+                  label="Groom Name"
+                  name="groom_name"
+                  value={form.groom_name}
+                  update={update}
+                  required
+                />
+
+                <Input
+                  label="Contact Person"
+                  name="contact_name"
+                  value={form.contact_name}
+                  update={update}
+                  required
+                />
+
+                <Input
+                  label="Email"
+                  name="email"
+                  value={form.email}
+                  update={update}
+                  required
+                />
+
+                <Input
+                  label="Mobile"
+                  name="mobile"
+                  value={form.mobile}
+                  update={update}
+                />
               </div>
             </>
           )}
@@ -142,11 +179,37 @@ export default function RegisterWeddingPage() {
           {step === 2 && (
             <>
               <Section title="Wedding Details" />
+
               <div className="grid">
-                <Input label="Wedding Date" name="wedding_date" type="date" value={form.wedding_date} update={update} required />
-                <Input label="Venue Name" name="venue_name" value={form.venue_name} update={update} />
-                <Input label="Venue Address" name="venue_address" value={form.venue_address} update={update} />
-                <Input label="Guest Count" name="guest_count" value={form.guest_count} update={update} />
+                <Input
+                  label="Wedding Date"
+                  name="wedding_date"
+                  type="date"
+                  value={form.wedding_date}
+                  update={update}
+                  required
+                />
+
+                <Input
+                  label="Venue Name"
+                  name="venue_name"
+                  value={form.venue_name}
+                  update={update}
+                />
+
+                <Input
+                  label="Venue Address"
+                  name="venue_address"
+                  value={form.venue_address}
+                  update={update}
+                />
+
+                <Input
+                  label="Guest Count"
+                  name="guest_count"
+                  value={form.guest_count}
+                  update={update}
+                />
               </div>
             </>
           )}
@@ -154,20 +217,33 @@ export default function RegisterWeddingPage() {
           {step === 3 && (
             <>
               <Section title="Budget & Package" />
+
               <div className="grid">
-                <Input label="Total Budget" name="total_budget" value={form.total_budget} update={update} />
+                <Input
+                  label="Total Budget"
+                  name="total_budget"
+                  value={form.total_budget}
+                  update={update}
+                />
+
                 <div className="field">
                   <label>Package</label>
-                  <select value={form.package_name} onChange={(e) => update("package_name", e.target.value)}>
+                  <select
+                    value={form.package_name}
+                    onChange={(e) => update("package_name", e.target.value)}
+                  >
                     <option>Full Planning</option>
-                    <option>Partial Planning</option>
-                    <option>Day Coordination</option>
-                    <option>Supplier Management</option>
+                    <option>Style & Décor Planning</option>
+                    <option>On-the-Day Coordination</option>
                   </select>
                 </div>
+
                 <div className="field">
                   <label>Wedding Theme</label>
-                  <select value={form.theme} onChange={(e) => update("theme", e.target.value)}>
+                  <select
+                    value={form.theme}
+                    onChange={(e) => update("theme", e.target.value)}
+                  >
                     <option>Peonies & Blush</option>
                     <option>White & Gold Luxury</option>
                     <option>Modern Minimalist</option>
@@ -182,9 +258,21 @@ export default function RegisterWeddingPage() {
           {step === 4 && (
             <>
               <Section title="Inspiration & Notes" />
+
               <div className="grid">
-                <Input label="Colour Palette" name="colour_palette" value={form.colour_palette} update={update} />
-                <Input label="Pinterest / Inspiration Link" name="pinterest_link" value={form.pinterest_link} update={update} />
+                <Input
+                  label="Colour Palette"
+                  name="colour_palette"
+                  value={form.colour_palette}
+                  update={update}
+                />
+
+                <Input
+                  label="Pinterest / Inspiration Link"
+                  name="pinterest_link"
+                  value={form.pinterest_link}
+                  update={update}
+                />
               </div>
 
               <div className="field">
@@ -200,7 +288,11 @@ export default function RegisterWeddingPage() {
 
           <div className="actions">
             {step > 1 && (
-              <button type="button" className="secondary" onClick={() => setStep(step - 1)}>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setStep(step - 1)}
+              >
                 Back
               </button>
             )}
@@ -247,6 +339,7 @@ function Input({
       <label>
         {label} {required && <span>*</span>}
       </label>
+
       <input
         type={type}
         value={value}
@@ -262,11 +355,16 @@ const css = `
   box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .page {
+  width: 100%;
   min-height: 100vh;
   background: linear-gradient(135deg, #fff8f6, #fff1f4);
   color: #33282d;
@@ -275,6 +373,7 @@ body {
 }
 
 .header {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -311,12 +410,12 @@ body {
   font-size: 38px;
 }
 
-.header nav {
+.topNav {
   display: flex;
   gap: 18px;
 }
 
-.header nav a {
+.topNav a {
   color: #6b5f66;
   font-weight: 700;
   text-decoration: none;
@@ -333,28 +432,34 @@ body {
   align-items: start;
 }
 
-.intro h1 {
-  font-family: Georgia, serif;
-  font-size: clamp(44px, 8vw, 82px);
-  line-height: 0.95;
-  margin: 12px 0 20px;
-}
-
-.intro p {
-  font-size: 20px;
-  line-height: 1.6;
-  color: #6e6470;
+.intro {
+  width: 100%;
+  min-width: 0;
 }
 
 .eyebrow {
   text-transform: uppercase;
   letter-spacing: 5px;
   color: #b94f65;
-  font-size: 13px !important;
+  font-size: 13px;
   font-weight: 900;
 }
 
+.intro h1 {
+  font-family: Georgia, serif;
+  font-size: clamp(42px, 7vw, 82px);
+  line-height: 0.95;
+  margin: 12px 0 20px;
+}
+
+.introText {
+  font-size: 20px;
+  line-height: 1.6;
+  color: #6e6470;
+}
+
 .themeCard {
+  width: 100%;
   background: white;
   border: 1px solid #f0cdd3;
   border-radius: 28px;
@@ -374,14 +479,22 @@ body {
   margin: 10px 0;
 }
 
+.themeCard p {
+  font-size: 18px;
+  line-height: 1.6;
+  color: #6e6470;
+}
+
 .steps {
+  width: 100%;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   margin-top: 24px;
 }
 
 .steps button {
+  width: 100%;
   min-height: 58px;
   border-radius: 18px;
   border: 1px solid #eac1c9;
@@ -398,6 +511,7 @@ body {
 
 .formCard {
   width: 100%;
+  min-width: 0;
   background: white;
   border: 1px solid #f0cdd3;
   border-radius: 32px;
@@ -407,7 +521,7 @@ body {
 
 .formCard h2 {
   font-family: Georgia, serif;
-  font-size: clamp(42px, 7vw, 68px);
+  font-size: clamp(40px, 6vw, 68px);
   line-height: 1;
   margin: 0 0 14px;
 }
@@ -440,6 +554,7 @@ body {
 }
 
 .grid {
+  width: 100%;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
@@ -447,6 +562,7 @@ body {
 
 .field {
   width: 100%;
+  min-width: 0;
 }
 
 .field label {
@@ -465,7 +581,8 @@ body {
 .field select,
 .field textarea {
   width: 100%;
-  min-height: 56px;
+  max-width: 100%;
+  min-height: 58px;
   border: 1px solid #e8bdc7;
   border-radius: 16px;
   padding: 14px 16px;
@@ -512,11 +629,21 @@ body {
   font-weight: 700;
 }
 
-/* MOBILE FIX */
-@media (max-width: 760px) {
+/* FULL MOBILE RESET */
+@media (max-width: 820px) {
+  .page {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
   .header {
+    width: 100%;
+    padding: 18px 16px;
     align-items: flex-start;
-    padding: 18px 18px;
+  }
+
+  .logo {
+    gap: 10px;
   }
 
   .logo strong {
@@ -527,35 +654,52 @@ body {
     letter-spacing: 3px;
   }
 
-  .header nav {
+  .flower {
+    font-size: 34px;
+  }
+
+  .topNav {
     flex-direction: column;
-    gap: 8px;
     align-items: flex-end;
+    gap: 8px;
   }
 
   .layout {
-    display: block;
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
     padding: 26px 16px;
+    gap: 24px;
   }
 
-  .intro {
-    margin-bottom: 24px;
+  .intro,
+  .formCard {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .intro h1 {
     font-size: 46px;
   }
 
-  .intro p {
+  .introText {
     font-size: 17px;
   }
 
   .themeCard {
     padding: 22px;
+    border-radius: 24px;
+  }
+
+  .themeCard p {
+    font-size: 16px;
   }
 
   .steps {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
   }
 
   .steps button {
@@ -564,7 +708,6 @@ body {
   }
 
   .formCard {
-    width: 100%;
     padding: 24px;
     border-radius: 26px;
   }
@@ -586,7 +729,7 @@ body {
   .field select,
   .field textarea {
     width: 100%;
-    min-height: 58px;
+    min-height: 60px;
     font-size: 16px;
   }
 
@@ -596,6 +739,29 @@ body {
 
   .actions button {
     width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .layout {
+    padding: 22px 14px;
+  }
+
+  .intro h1 {
+    font-size: 40px;
+  }
+
+  .formCard h2 {
+    font-size: 40px;
+  }
+
+  .sectionTitle {
+    font-size: 28px;
+  }
+
+  .steps button {
+    font-size: 13px;
+    padding: 8px;
   }
 }
 `;
