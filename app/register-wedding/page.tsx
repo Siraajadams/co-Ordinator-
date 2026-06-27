@@ -1,198 +1,255 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabaseClient";
 
-const inputStyle: React.CSSProperties = {
-  width: "100%", border: "1px solid #f1c8d3", borderRadius: 14, padding: "12px 14px",
-  fontSize: 15, outline: "none", background: "#fff"
-};
-
-const labelStyle: React.CSSProperties = {
-  display: "block", fontSize: 13, fontWeight: 700, color: "#554247", marginBottom: 7
-};
-
-export default function RegisterWeddingPage() {
-  const [step, setStep] = useState(1);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
-  const [form, setForm] = useState({
-    bride_name: "", groom_name: "", contact_name: "", email: "", mobile: "",
-    wedding_date: "", venue_name: "", venue_address: "", guest_count: "",
-    theme: "Peonies & Blush Elegance", total_budget: "", priorities: "",
-    package_name: "Signature Planning", colour_palette: "Blush, Ivory and Champagne",
-    pinterest_link: "", notes: ""
-  });
-
-  function update(name: string, value: string) {
-    setForm({ ...form, [name]: value });
-  }
-
-  async function submitWedding(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    setMessage("Submitting your wedding enquiry...");
-
-    const { error } = await supabase.from("weddings").insert({
-      bride_name: form.bride_name,
-      groom_name: form.groom_name,
-      contact_name: form.contact_name,
-      email: form.email,
-      mobile: form.mobile,
-      wedding_date: form.wedding_date,
-      venue_name: form.venue_name,
-      venue_address: form.venue_address,
-      guest_count: Number(form.guest_count || 0),
-      theme: form.theme,
-      total_budget: Number(form.total_budget || 0),
-      priorities: form.priorities,
-      package_name: form.package_name,
-      colour_palette: form.colour_palette,
-      pinterest_link: form.pinterest_link,
-      notes: form.notes,
-      status: "Lead"
-    });
-
-    setSaving(false);
-    if (error) {
-      setMessage("Could not save wedding: " + error.message);
-      return;
-    }
-    setMessage("Wedding registration submitted successfully.");
-  }
-
+export default function HomePage() {
   return (
-    <main style={{ minHeight: "100vh", background: "linear-gradient(135deg,#fff8f6,#fff,#fdecef)", color: "#263238" }}>
-      <nav style={{ maxWidth: 1180, margin: "0 auto", padding: "24px 22px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <Link href="/" style={{ fontFamily: "Georgia, serif", color: "#9f4662", fontSize: 26, fontWeight: 700 }}>Co-Ordinator Weddings</Link>
-        <div style={{ display: "flex", gap: 20, color: "#6b7280", fontSize: 14 }}>
-          <Link href="/">Home</Link>
-          <Link href="/login">Planner Login</Link>
-        </div>
-      </nav>
+    <main style={styles.page}>
+      <header style={styles.header}>
+        <Link href="/" style={styles.logoWrap}>
+          <div style={styles.logoIcon}>🌸</div>
+          <div>
+            <h1 style={styles.logo}>Co-Ordinator</h1>
+            <p style={styles.logoSub}>WEDDINGS</p>
+          </div>
+        </Link>
 
-      <section style={{ maxWidth: 1180, margin: "0 auto", padding: "28px 22px 70px", display: "grid", gridTemplateColumns: ".85fr 1.15fr", gap: 34, alignItems: "start" }}>
-        <aside style={{ position: "sticky", top: 20 }}>
-          <p style={{ color: "#be607b", letterSpacing: 4, textTransform: "uppercase", fontSize: 12, fontWeight: 800 }}>Wedding enquiry</p>
-          <h1 style={{ fontFamily: "Georgia, serif", fontSize: 54, lineHeight: 1.05, margin: "15px 0", color: "#2f2a2b" }}>
-            Let us plan your beautiful day.
-          </h1>
-          <p style={{ color: "#667085", fontSize: 17, lineHeight: 1.7 }}>
-            Complete this short registration. Your wedding will be created as a CRM profile for the planner to manage quotes, suppliers, budgets and approvals.
+        <nav style={styles.nav}>
+          <Link href="/register-wedding" style={styles.navLink}>
+            Register
+          </Link>
+          <Link href="/login" style={styles.navLink}>
+            Login
+          </Link>
+          <Link href="/dashboard" style={styles.navButton}>
+            Dashboard
+          </Link>
+        </nav>
+      </header>
+
+      <section style={styles.hero}>
+        <div style={styles.heroText}>
+          <p style={styles.eyebrow}>Luxury Wedding Planning CRM</p>
+
+          <h2 style={styles.heroTitle}>
+            Peonies, planning & perfect moments.
+          </h2>
+
+          <p style={styles.heroSub}>
+            A premium wedding coordination platform for enquiries, supplier
+            quotes, approvals, budgets and beautiful wedding experiences.
           </p>
 
-          <div style={{ marginTop: 26, background: "white", border: "1px solid #f4d5dd", borderRadius: 28, padding: 24, boxShadow: "0 20px 55px rgba(159,70,98,.12)" }}>
-            <div style={{ fontSize: 50 }}>🌸</div>
-            <h2 style={{ fontFamily: "Georgia, serif", color: "#9f4662", margin: "8px 0" }}>Peonies & Blush</h2>
-            <p style={{ color: "#667085", lineHeight: 1.6, margin: 0 }}>Soft florals, champagne tones, romantic styling and luxury supplier coordination.</p>
+          <div style={styles.actions}>
+            <Link href="/register-wedding" style={styles.primaryButton}>
+              Register Your Wedding
+            </Link>
+            <Link href="/login" style={styles.secondaryButton}>
+              Planner Login
+            </Link>
           </div>
+        </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 18 }}>
-            {["Couple", "Wedding", "Budget", "Inspiration"].map((name, i) => (
-              <button key={name} onClick={() => setStep(i + 1)} style={{
-                border: "1px solid #f1c8d3", borderRadius: 16, padding: 13,
-                background: step === i + 1 ? "#c95d7b" : "white",
-                color: step === i + 1 ? "white" : "#9f4662",
-                fontWeight: 800, cursor: "pointer"
-              }}>
-                {i + 1}. {name}
-              </button>
-            ))}
+        <div style={styles.heroCard}>
+          <div style={styles.flower}>🌸</div>
+          <h3 style={styles.cardTitle}>Peonies & Blush</h3>
+          <p style={styles.cardText}>
+            Soft florals, champagne tones, romantic styling and luxury supplier
+            coordination.
+          </p>
+        </div>
+      </section>
+
+      <section style={styles.features}>
+        {[
+          ["💍", "Client Registration", "Capture wedding enquiries beautifully."],
+          ["🌸", "Supplier CRM", "Track florists, caterers and photographers."],
+          ["💰", "Budget Tracker", "Monitor budget, quotes and approvals."],
+          ["📅", "Timeline", "Plan tasks from enquiry to wedding day."],
+        ].map(([icon, title, text]) => (
+          <div key={title} style={styles.featureCard}>
+            <div style={styles.featureIcon}>{icon}</div>
+            <h3 style={styles.featureTitle}>{title}</h3>
+            <p style={styles.featureText}>{text}</p>
           </div>
-        </aside>
-
-        <form onSubmit={submitWedding} style={{ background: "white", borderRadius: 34, padding: 32, border: "1px solid #f4d5dd", boxShadow: "0 28px 80px rgba(31,41,55,.10)" }}>
-          <div style={{ marginBottom: 24 }}>
-            <h2 style={{ fontFamily: "Georgia, serif", fontSize: 34, color: "#2f2a2b", margin: 0 }}>Register Your Wedding</h2>
-            <p style={{ color: "#667085", marginTop: 8 }}>Step {step} of 4</p>
-            <div style={{ height: 8, background: "#f8dbe3", borderRadius: 999, overflow: "hidden" }}>
-              <div style={{ width: `${step * 25}%`, height: "100%", background: "#c95d7b" }} />
-            </div>
-          </div>
-
-          {step === 1 && (
-            <Panel title="Couple Details">
-              <Grid>
-                <Input label="Bride Name" name="bride_name" value={form.bride_name} update={update} required />
-                <Input label="Groom Name" name="groom_name" value={form.groom_name} update={update} required />
-                <Input label="Contact Person" name="contact_name" value={form.contact_name} update={update} required />
-                <Input label="Email" name="email" value={form.email} update={update} required />
-                <Input label="Mobile" name="mobile" value={form.mobile} update={update} />
-              </Grid>
-            </Panel>
-          )}
-
-          {step === 2 && (
-            <Panel title="Wedding Details">
-              <Grid>
-                <Input type="date" label="Wedding Date" name="wedding_date" value={form.wedding_date} update={update} required />
-                <Input label="Venue Name" name="venue_name" value={form.venue_name} update={update} />
-                <Input label="Venue Address" name="venue_address" value={form.venue_address} update={update} />
-                <Input label="Guest Count" name="guest_count" value={form.guest_count} update={update} />
-                <Select label="Wedding Theme" name="theme" value={form.theme} update={update}
-                  options={["Peonies & Blush Elegance","White & Gold Luxury","Modern Minimalist","Garden Romance","Rustic Chic","Classic Traditional"]} />
-              </Grid>
-            </Panel>
-          )}
-
-          {step === 3 && (
-            <Panel title="Budget & Planning Package">
-              <Grid>
-                <Input label="Estimated Total Budget" name="total_budget" value={form.total_budget} update={update} />
-                <Select label="Planning Package" name="package_name" value={form.package_name} update={update}
-                  options={["Signature Planning","Full Wedding Coordination","On-the-Day Coordination","Luxury Bespoke Planning"]} />
-                <TextArea label="Budget Priorities" name="priorities" value={form.priorities} update={update} placeholder="Example: flowers, food, photography, venue styling..." />
-              </Grid>
-            </Panel>
-          )}
-
-          {step === 4 && (
-            <Panel title="Inspiration & Notes">
-              <Grid>
-                <Input label="Colour Palette" name="colour_palette" value={form.colour_palette} update={update} />
-                <Input label="Pinterest / Inspiration Link" name="pinterest_link" value={form.pinterest_link} update={update} />
-                <TextArea label="Wedding Notes" name="notes" value={form.notes} update={update} placeholder="Tell us about your dream wedding..." />
-              </Grid>
-            </Panel>
-          )}
-
-          <div style={{ display: "flex", gap: 12, justifyContent: "space-between", marginTop: 26 }}>
-            <button type="button" disabled={step === 1} onClick={() => setStep(step - 1)} style={btn("#fff", "#9f4662", "#f1c8d3")}>Back</button>
-            {step < 4 ? (
-              <button type="button" onClick={() => setStep(step + 1)} style={btn("#c95d7b", "white", "#c95d7b")}>Continue</button>
-            ) : (
-              <button disabled={saving} style={btn("#c95d7b", "white", "#c95d7b")}>{saving ? "Submitting..." : "Submit Wedding Enquiry ♥"}</button>
-            )}
-          </div>
-
-          {message && <p style={{ marginTop: 18, padding: 14, borderRadius: 16, background: "#fff2f5", color: "#9f4662", fontWeight: 700, textAlign: "center" }}>{message}</p>}
-        </form>
+        ))}
       </section>
     </main>
   );
 }
 
-function btn(bg: string, color: string, border: string): React.CSSProperties {
-  return { background: bg, color, border: `1px solid ${border}`, borderRadius: 999, padding: "14px 24px", fontWeight: 800, cursor: "pointer" };
-}
-
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return <section><h3 style={{ fontFamily: "Georgia, serif", fontSize: 26, color: "#9f4662", marginTop: 0 }}>{title}</h3>{children}</section>;
-}
-
-function Grid({ children }: { children: React.ReactNode }) {
-  return <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 16 }}>{children}</div>;
-}
-
-function Input({ label, name, value, update, type = "text", required = false }: any) {
-  return <div><label style={labelStyle}>{label} {required && <span style={{ color: "#c95d7b" }}>*</span>}</label><input type={type} value={value} required={required} onChange={(e) => update(name, e.target.value)} style={inputStyle} /></div>;
-}
-
-function Select({ label, name, value, update, options }: any) {
-  return <div><label style={labelStyle}>{label}</label><select value={value} onChange={(e) => update(name, e.target.value)} style={inputStyle}>{options.map((o: string) => <option key={o}>{o}</option>)}</select></div>;
-}
-
-function TextArea({ label, name, value, update, placeholder }: any) {
-  return <div style={{ gridColumn: "1 / -1" }}><label style={labelStyle}>{label}</label><textarea value={value} placeholder={placeholder} onChange={(e) => update(name, e.target.value)} style={{ ...inputStyle, minHeight: 105, resize: "vertical" }} /></div>;
-}
+const styles: { [key: string]: React.CSSProperties } = {
+  page: {
+    minHeight: "100vh",
+    background: "linear-gradient(135deg, #fff8f6 0%, #fff1f4 100%)",
+    color: "#33282d",
+    fontFamily: "Arial, Helvetica, sans-serif",
+    overflowX: "hidden",
+  },
+  header: {
+    width: "100%",
+    padding: "22px clamp(20px, 5vw, 72px)",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 18,
+    background: "rgba(255,255,255,0.88)",
+    borderBottom: "1px solid #f1d5d8",
+    position: "sticky",
+    top: 0,
+    zIndex: 10,
+  },
+  logoWrap: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    textDecoration: "none",
+    minWidth: 0,
+  },
+  logoIcon: {
+    fontSize: 32,
+  },
+  logo: {
+    margin: 0,
+    color: "#9b3e54",
+    fontFamily: "Georgia, serif",
+    fontSize: "clamp(24px, 4vw, 38px)",
+    lineHeight: 1,
+  },
+  logoSub: {
+    margin: "6px 0 0",
+    color: "#c46b7f",
+    fontSize: 11,
+    letterSpacing: 4,
+  },
+  nav: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
+  },
+  navLink: {
+    color: "#6b5f66",
+    textDecoration: "none",
+    fontWeight: 700,
+    fontSize: 14,
+    padding: "10px 8px",
+  },
+  navButton: {
+    background: "#a63d4f",
+    color: "white",
+    textDecoration: "none",
+    fontWeight: 800,
+    fontSize: 14,
+    padding: "11px 16px",
+    borderRadius: 999,
+  },
+  hero: {
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1.1fr) minmax(280px, 0.9fr)",
+    gap: "clamp(26px, 5vw, 70px)",
+    alignItems: "center",
+    padding: "clamp(44px, 8vw, 100px) clamp(20px, 6vw, 88px)",
+  },
+  heroText: {
+    maxWidth: 760,
+  },
+  eyebrow: {
+    color: "#b94f65",
+    textTransform: "uppercase",
+    letterSpacing: 5,
+    fontSize: "clamp(11px, 2.6vw, 14px)",
+    fontWeight: 900,
+    marginBottom: 18,
+  },
+  heroTitle: {
+    fontFamily: "Georgia, serif",
+    fontSize: "clamp(48px, 12vw, 112px)",
+    lineHeight: 0.95,
+    margin: "0 0 24px",
+    color: "#2f292c",
+    letterSpacing: "-3px",
+  },
+  heroSub: {
+    fontSize: "clamp(18px, 4vw, 25px)",
+    lineHeight: 1.55,
+    color: "#6e6470",
+    maxWidth: 700,
+    marginBottom: 30,
+  },
+  actions: {
+    display: "flex",
+    gap: 14,
+    flexWrap: "wrap",
+  },
+  primaryButton: {
+    background: "#a63d4f",
+    color: "white",
+    textDecoration: "none",
+    padding: "16px 22px",
+    borderRadius: 16,
+    fontWeight: 900,
+    boxShadow: "0 15px 35px rgba(166,61,79,0.22)",
+  },
+  secondaryButton: {
+    background: "white",
+    color: "#a63d4f",
+    border: "1px solid #e6b8c1",
+    textDecoration: "none",
+    padding: "16px 22px",
+    borderRadius: 16,
+    fontWeight: 900,
+  },
+  heroCard: {
+    background: "rgba(255,255,255,0.82)",
+    border: "1px solid #f0cdd3",
+    borderRadius: 36,
+    padding: "clamp(28px, 5vw, 48px)",
+    boxShadow: "0 30px 80px rgba(143,52,69,0.14)",
+    minHeight: 360,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+  },
+  flower: {
+    fontSize: 86,
+    marginBottom: 18,
+  },
+  cardTitle: {
+    fontFamily: "Georgia, serif",
+    color: "#9b3e54",
+    fontSize: 38,
+    margin: "0 0 14px",
+  },
+  cardText: {
+    color: "#6e6470",
+    fontSize: 18,
+    lineHeight: 1.6,
+  },
+  features: {
+    padding: "0 clamp(20px, 6vw, 88px) 70px",
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: 18,
+  },
+  featureCard: {
+    background: "white",
+    border: "1px solid #f1d5d8",
+    borderRadius: 26,
+    padding: 24,
+    boxShadow: "0 18px 40px rgba(143,52,69,0.08)",
+  },
+  featureIcon: {
+    fontSize: 36,
+    marginBottom: 14,
+  },
+  featureTitle: {
+    margin: "0 0 8px",
+    color: "#8f3445",
+    fontSize: 20,
+  },
+  featureText: {
+    margin: 0,
+    color: "#6f6269",
+    lineHeight: 1.5,
+  },
+};
