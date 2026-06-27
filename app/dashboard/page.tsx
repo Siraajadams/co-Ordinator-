@@ -8,17 +8,37 @@ type Wedding = {
   id: string;
   bride_name: string;
   groom_name: string;
-  contact_name: string;
-  email: string;
-  mobile: string;
-  wedding_date: string;
-  venue_name: string;
-  guest_count: number;
-  theme: string;
-  total_budget: number;
-  status: string;
+  contact_name?: string;
+  email?: string;
+  mobile?: string;
+  wedding_date?: string;
+  venue_name?: string;
+  guest_count?: number;
+  theme?: string;
+  total_budget?: number;
+  status?: string;
   planning_stage?: string;
-  created_at: string;
+  created_at?: string;
+};
+
+type Supplier = {
+  id: string;
+  wedding_id: string;
+  category: string;
+  item: string;
+  supplier_name: string;
+  contact_person?: string;
+  email?: string;
+  mobile?: string;
+  deposit_paid: string;
+  cost_estimate: number;
+  deposit_amount: number;
+  paid: number;
+  balance_owing: number;
+  status: string;
+  notes?: string;
+  action_required?: string;
+  due_date?: string;
 };
 
 const stages = [
@@ -33,37 +53,105 @@ const stages = [
   "Completed",
 ];
 
+const categories = [
+  "Venue",
+  "Catering",
+  "Desserts",
+  "Coffee",
+  "Ice Cream",
+  "Mocktails",
+  "Beverages",
+  "Invitations",
+  "Stationery",
+  "Favours",
+  "Photographer",
+  "Videographer",
+  "Entertainment",
+  "Sound & Lighting",
+  "Live Illustrator",
+  "Florals",
+  "Decor Hire",
+  "Furniture",
+  "Tables",
+  "Table Linen",
+  "Lighting",
+  "Bathrooms",
+  "Transport",
+  "Accommodation",
+  "Hair & Makeup",
+  "Cake",
+  "Celebrant",
+  "Security",
+  "Cleaning",
+  "Other",
+];
+
+const statuses = [
+  "Not Started",
+  "Awaiting Quote",
+  "In Progress",
+  "Booked",
+  "Deposit Paid",
+  "Payment to Confirm",
+  "Completed",
+  "Over Budget",
+];
+
 export default function DashboardPage() {
   const [weddings, setWeddings] = useState<Wedding[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
+  const [supplierFilter, setSupplierFilter] = useState("All");
+
+  const [supplierForm, setSupplierForm] = useState({
+    wedding_id: "",
+    category: "Venue",
+    item: "Venue",
+    supplier_name: "",
+    contact_person: "",
+    email: "",
+    mobile: "",
+    deposit_paid: "No",
+    cost_estimate: "",
+    deposit_amount: "",
+    paid: "",
+    status: "Not Started",
+    notes: "",
+    action_required: "",
+    due_date: "",
+  });
 
   useEffect(() => {
-    loadWeddings();
+    loadData();
   }, []);
 
-  async function loadWeddings() {
+  async function loadData() {
     setLoading(true);
 
-    const { data, error } = await supabase
+    const { data: weddingData, error: weddingError } = await supabase
       .from("weddings")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (error) setMessage(error.message);
-    else setWeddings(data || []);
+    const { data: supplierData, error: supplierError } = await supabase
+      .from("suppliers")
+      .select("*")
+      .order("created_at", { ascending: false });
 
+    if (weddingError) setMessage(weddingError.message);
+    if (supplierError) setMessage(supplierError.message);
+
+    setWeddings(weddingData || []);
+    setSuppliers(supplierData || []);
     setLoading(false);
   }
 
   async function updateStage(id: string, stage: string) {
     const { error } = await supabase
       .from("weddings")
-      .update({
-        status: stage,
-        planning_stage: stage,
-      })
+      .update({ status: stage, planning_stage: stage })
       .eq("id", id);
 
     if (error) {
@@ -71,10 +159,76 @@ export default function DashboardPage() {
       return;
     }
 
-    loadWeddings();
+    loadData();
   }
 
-  const filtered = weddings.filter((w) => {
+  async function addSupplier(e: React.FormEvent) {
+    e.preventDefault();
+
+    if (!supplierForm.wedding_id) {
+      alert("Please select a wedding.");
+      return;
+    }
+
+    const { error } = await supabase.from("suppliers").insert({
+      wedding_id: supplierForm.wedding_id,
+      category: supplierForm.category,
+      item: supplierForm.item,
+      supplier_name: supplierForm.supplier_name,
+      contact_person: supplierForm.contact_person,
+      email: supplierForm.email,
+      mobile: supplierForm.mobile,
+      deposit_paid: supplierForm.deposit_paid,
+      cost_estimate: Number(supplierForm.cost_estimate || 0),
+      deposit_amount: Number(supplierForm.deposit_amount || 0),
+      paid: Number(supplierForm.paid || 0),
+      status: supplierForm.status,
+      notes: supplierForm.notes,
+      action_required: supplierForm.action_required,
+      due_date: supplierForm.due_date || null,
+    });
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setSupplierForm({
+      wedding_id: "",
+      category: "Venue",
+      item: "Venue",
+      supplier_name: "",
+      contact_person: "",
+      email: "",
+      mobile: "",
+      deposit_paid: "No",
+      cost_estimate: "",
+      deposit_amount: "",
+      paid: "",
+      status: "Not Started",
+      notes: "",
+      action_required: "",
+      due_date: "",
+    });
+
+    loadData();
+  }
+
+  async function updateSupplierStatus(id: string, status: string) {
+    const { error } = await supabase
+      .from("suppliers")
+      .update({ status })
+      .eq("id", id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    loadData();
+  }
+
+  const filteredWeddings = weddings.filter((w) => {
     const term = search.toLowerCase();
     return (
       w.bride_name?.toLowerCase().includes(term) ||
@@ -84,28 +238,47 @@ export default function DashboardPage() {
     );
   });
 
-  const totalBudget = weddings.reduce(
+  const filteredSuppliers = suppliers.filter((s) => {
+    if (supplierFilter === "All") return true;
+    if (supplierFilter === "Outstanding Payments") return Number(s.balance_owing || 0) > 0;
+    if (supplierFilter === "Deposits Due") return s.deposit_paid !== "Yes";
+    if (supplierFilter === "Awaiting Quotes") return s.status === "Awaiting Quote";
+    if (supplierFilter === "Completed") return s.status === "Completed";
+    return true;
+  });
+
+  const totalWeddingBudget = weddings.reduce(
     (sum, w) => sum + Number(w.total_budget || 0),
     0
   );
 
-  const active = weddings.filter(
-    (w) => !["Completed", "Cancelled", "Lost"].includes(w.status || "")
-  ).length;
+  const supplierEstimate = suppliers.reduce(
+    (sum, s) => sum + Number(s.cost_estimate || 0),
+    0
+  );
 
-  const upcoming = weddings.filter((w) => {
-    if (!w.wedding_date) return false;
-    return new Date(w.wedding_date) >= new Date();
-  }).length;
+  const supplierPaid = suppliers.reduce(
+    (sum, s) => sum + Number(s.paid || 0),
+    0
+  );
+
+  const supplierBalance = suppliers.reduce(
+    (sum, s) => sum + Number(s.balance_owing || 0),
+    0
+  );
+
+  const awaitingQuotes = suppliers.filter((s) => s.status === "Awaiting Quote").length;
+  const depositsDue = suppliers.filter((s) => s.deposit_paid !== "Yes").length;
+  const completedSuppliers = suppliers.filter((s) => s.status === "Completed").length;
 
   const pipelineGroups = useMemo(() => {
     return stages.map((stage) => ({
       stage,
-      items: filtered.filter(
+      items: filteredWeddings.filter(
         (w) => (w.planning_stage || w.status || "New Enquiry") === stage
       ),
     }));
-  }, [filtered]);
+  }, [filteredWeddings]);
 
   return (
     <main style={styles.page}>
@@ -132,10 +305,10 @@ export default function DashboardPage() {
       <section style={styles.content}>
         <div style={styles.header}>
           <div>
-            <p style={styles.eyebrow}>Planner Workspace</p>
-            <h2 style={styles.title}>Wedding Coordination Dashboard</h2>
+            <p style={styles.eyebrow}>Version 2</p>
+            <h2 style={styles.title}>Wedding Project Management CRM</h2>
             <p style={styles.subtitle}>
-              Manage weddings, suppliers, budgets, quotes and approvals.
+              Manage weddings, suppliers, payments, balances, notes and approvals.
             </p>
           </div>
 
@@ -151,29 +324,22 @@ export default function DashboardPage() {
 
         <div style={styles.statsGrid}>
           <StatCard label="Total Weddings" value={weddings.length} />
-          <StatCard label="Active Weddings" value={active} />
-          <StatCard label="Upcoming Weddings" value={upcoming} />
-          <StatCard
-            label="Total Pipeline Budget"
-            value={`R ${totalBudget.toLocaleString()}`}
-          />
+          <StatCard label="Supplier Estimate" value={`R ${supplierEstimate.toLocaleString()}`} />
+          <StatCard label="Paid" value={`R ${supplierPaid.toLocaleString()}`} />
+          <StatCard label="Balance Owing" value={`R ${supplierBalance.toLocaleString()}`} />
         </div>
 
         <section style={styles.section}>
           <div style={styles.sectionHeader}>
             <div>
               <h3 style={styles.sectionTitle}>Wedding CRM Pipeline</h3>
-              <p style={styles.sectionSub}>
-                Move each wedding through the planning process.
-              </p>
+              <p style={styles.sectionSub}>Move each wedding through the planning process.</p>
             </div>
-            <button onClick={loadWeddings} style={styles.refreshButton}>
-              Refresh
-            </button>
+            <button onClick={loadData} style={styles.refreshButton}>Refresh</button>
           </div>
 
           {loading ? (
-            <p>Loading weddings...</p>
+            <p>Loading...</p>
           ) : (
             <div style={styles.pipeline}>
               {pipelineGroups.map((group) => (
@@ -189,53 +355,25 @@ export default function DashboardPage() {
 
                   {group.items.map((wedding) => (
                     <div key={wedding.id} style={styles.card}>
-                      <div style={styles.cardTop}>
-                        <span style={styles.badge}>
-                          {wedding.theme || "Wedding"}
-                        </span>
-                        <span style={styles.date}>
-                          {formatDate(wedding.wedding_date)}
-                        </span>
-                      </div>
-
+                      <span style={styles.badge}>{wedding.theme || "Wedding"}</span>
                       <h4 style={styles.cardTitle}>
                         {wedding.bride_name} & {wedding.groom_name}
                       </h4>
-
+                      <p style={styles.cardText}><strong>Date:</strong> {formatDate(wedding.wedding_date)}</p>
+                      <p style={styles.cardText}><strong>Venue:</strong> {wedding.venue_name || "TBC"}</p>
+                      <p style={styles.cardText}><strong>Guests:</strong> {wedding.guest_count || 0}</p>
                       <p style={styles.cardText}>
-                        <strong>Venue:</strong> {wedding.venue_name || "TBC"}
-                      </p>
-
-                      <p style={styles.cardText}>
-                        <strong>Guests:</strong> {wedding.guest_count || 0}
-                      </p>
-
-                      <p style={styles.cardText}>
-                        <strong>Budget:</strong> R{" "}
-                        {Number(wedding.total_budget || 0).toLocaleString()}
-                      </p>
-
-                      <p style={styles.cardText}>
-                        <strong>Contact:</strong> {wedding.contact_name || "-"}
+                        <strong>Budget:</strong> R {Number(wedding.total_budget || 0).toLocaleString()}
                       </p>
 
                       <div style={styles.cardActions}>
-                        <Link
-                          href={`/weddings/${wedding.id}`}
-                          style={styles.openButton}
-                        >
+                        <Link href={`/weddings/${wedding.id}`} style={styles.openButton}>
                           Open
                         </Link>
 
                         <select
-                          value={
-                            wedding.planning_stage ||
-                            wedding.status ||
-                            "New Enquiry"
-                          }
-                          onChange={(e) =>
-                            updateStage(wedding.id, e.target.value)
-                          }
+                          value={wedding.planning_stage || wedding.status || "New Enquiry"}
+                          onChange={(e) => updateStage(wedding.id, e.target.value)}
                           style={styles.stageSelect}
                         >
                           {stages.map((stage) => (
@@ -253,9 +391,7 @@ export default function DashboardPage() {
 
         <section id="weddings" style={styles.section}>
           <h3 style={styles.sectionTitle}>Wedding Management</h3>
-          <p style={styles.sectionSub}>
-            All registered weddings and client profiles.
-          </p>
+          <p style={styles.sectionSub}>All registered weddings and client profiles.</p>
 
           <div style={styles.tableWrap}>
             <table style={styles.table}>
@@ -270,7 +406,7 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((w) => (
+                {filteredWeddings.map((w) => (
                   <tr key={w.id}>
                     <td>{w.bride_name} & {w.groom_name}</td>
                     <td>{formatDate(w.wedding_date)}</td>
@@ -288,57 +424,209 @@ export default function DashboardPage() {
         <section id="suppliers" style={styles.section}>
           <h3 style={styles.sectionTitle}>Supplier CRM</h3>
           <p style={styles.sectionSub}>
-            Manage florists, caterers, photographers, venues and musicians.
+            Spreadsheet-style wedding supplier tracker with costs, payments, notes and actions.
           </p>
 
-          <div style={styles.grid3}>
-            {[
-              "🌸 Florists",
-              "🍽 Caterers",
-              "📷 Photographers",
-              "🎻 Entertainment",
-              "🏛 Venues",
-              "🎂 Cakes",
-            ].map((item) => (
-              <div key={item} style={styles.miniCard}>{item}</div>
+          <div style={styles.supplierStats}>
+            <StatCard label="Total Suppliers" value={suppliers.length} />
+            <StatCard label="Awaiting Quotes" value={awaitingQuotes} />
+            <StatCard label="Deposits Due" value={depositsDue} />
+            <StatCard label="Completed" value={completedSuppliers} />
+          </div>
+
+          <div style={styles.filterRow}>
+            {["All", "Outstanding Payments", "Deposits Due", "Awaiting Quotes", "Completed"].map((f) => (
+              <button
+                key={f}
+                onClick={() => setSupplierFilter(f)}
+                style={supplierFilter === f ? styles.filterActive : styles.filterButton}
+              >
+                {f}
+              </button>
             ))}
+          </div>
+
+          <form onSubmit={addSupplier} style={styles.supplierForm}>
+            <select
+              value={supplierForm.wedding_id}
+              onChange={(e) => setSupplierForm({ ...supplierForm, wedding_id: e.target.value })}
+              style={styles.input}
+              required
+            >
+              <option value="">Select Wedding</option>
+              {weddings.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.bride_name} & {w.groom_name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={supplierForm.category}
+              onChange={(e) =>
+                setSupplierForm({
+                  ...supplierForm,
+                  category: e.target.value,
+                  item: e.target.value,
+                })
+              }
+              style={styles.input}
+            >
+              {categories.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+
+            <input
+              placeholder="Item"
+              value={supplierForm.item}
+              onChange={(e) => setSupplierForm({ ...supplierForm, item: e.target.value })}
+              style={styles.input}
+              required
+            />
+
+            <input
+              placeholder="Supplier"
+              value={supplierForm.supplier_name}
+              onChange={(e) => setSupplierForm({ ...supplierForm, supplier_name: e.target.value })}
+              style={styles.input}
+            />
+
+            <select
+              value={supplierForm.deposit_paid}
+              onChange={(e) => setSupplierForm({ ...supplierForm, deposit_paid: e.target.value })}
+              style={styles.input}
+            >
+              <option>No</option>
+              <option>Yes</option>
+            </select>
+
+            <input
+              placeholder="Cost Estimate"
+              value={supplierForm.cost_estimate}
+              onChange={(e) => setSupplierForm({ ...supplierForm, cost_estimate: e.target.value })}
+              style={styles.input}
+            />
+
+            <input
+              placeholder="Deposit Amount"
+              value={supplierForm.deposit_amount}
+              onChange={(e) => setSupplierForm({ ...supplierForm, deposit_amount: e.target.value })}
+              style={styles.input}
+            />
+
+            <input
+              placeholder="Paid"
+              value={supplierForm.paid}
+              onChange={(e) => setSupplierForm({ ...supplierForm, paid: e.target.value })}
+              style={styles.input}
+            />
+
+            <select
+              value={supplierForm.status}
+              onChange={(e) => setSupplierForm({ ...supplierForm, status: e.target.value })}
+              style={styles.input}
+            >
+              {statuses.map((s) => (
+                <option key={s}>{s}</option>
+              ))}
+            </select>
+
+            <input
+              type="date"
+              value={supplierForm.due_date}
+              onChange={(e) => setSupplierForm({ ...supplierForm, due_date: e.target.value })}
+              style={styles.input}
+            />
+
+            <input
+              placeholder="Action Required"
+              value={supplierForm.action_required}
+              onChange={(e) => setSupplierForm({ ...supplierForm, action_required: e.target.value })}
+              style={styles.inputWide}
+            />
+
+            <textarea
+              placeholder="Notes"
+              value={supplierForm.notes}
+              onChange={(e) => setSupplierForm({ ...supplierForm, notes: e.target.value })}
+              style={styles.textarea}
+            />
+
+            <button style={styles.addButton}>+ Add Supplier Item</button>
+          </form>
+
+          <div style={styles.tableWrap}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Supplier</th>
+                  <th>Deposit</th>
+                  <th>Estimate</th>
+                  <th>Paid</th>
+                  <th>Balance</th>
+                  <th>Status</th>
+                  <th>Due</th>
+                  <th>Notes</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredSuppliers.map((s) => (
+                  <tr key={s.id}>
+                    <td>{s.item}</td>
+                    <td>{s.supplier_name}</td>
+                    <td>{s.deposit_paid}</td>
+                    <td>R {Number(s.cost_estimate || 0).toLocaleString()}</td>
+                    <td>R {Number(s.paid || 0).toLocaleString()}</td>
+                    <td>R {Number(s.balance_owing || 0).toLocaleString()}</td>
+                    <td>
+                      <select
+                        value={s.status}
+                        onChange={(e) => updateSupplierStatus(s.id, e.target.value)}
+                        style={statusStyle(s.status)}
+                      >
+                        {statuses.map((status) => (
+                          <option key={status}>{status}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td>{s.due_date || "-"}</td>
+                    <td>{s.notes}</td>
+                    <td>{s.action_required}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
 
         <section id="budgets" style={styles.section}>
           <h3 style={styles.sectionTitle}>Budget Dashboard</h3>
-          <p style={styles.sectionSub}>
-            Track estimated budget, approved spend and remaining balance.
-          </p>
+          <p style={styles.sectionSub}>Automatic supplier totals from the Supplier CRM.</p>
 
           <div style={styles.statsGrid}>
-            <StatCard label="Estimated Budget" value={`R ${totalBudget.toLocaleString()}`} />
-            <StatCard label="Approved Spend" value="R 0" />
-            <StatCard label="Outstanding Quotes" value="0" />
-            <StatCard label="Remaining Budget" value={`R ${totalBudget.toLocaleString()}`} />
+            <StatCard label="Client Budget" value={`R ${totalWeddingBudget.toLocaleString()}`} />
+            <StatCard label="Supplier Estimate" value={`R ${supplierEstimate.toLocaleString()}`} />
+            <StatCard label="Paid" value={`R ${supplierPaid.toLocaleString()}`} />
+            <StatCard label="Outstanding" value={`R ${supplierBalance.toLocaleString()}`} />
           </div>
         </section>
 
         <section id="quotes" style={styles.section}>
           <h3 style={styles.sectionTitle}>Supplier Quotes</h3>
-          <p style={styles.sectionSub}>
-            Review quote status and supplier approvals.
-          </p>
+          <p style={styles.sectionSub}>Quotes can be tracked through supplier status and notes.</p>
         </section>
 
         <section id="approvals" style={styles.section}>
           <h3 style={styles.sectionTitle}>Client Approvals</h3>
-          <p style={styles.sectionSub}>
-            Pending approvals, rejected quotes and approved wedding items.
-          </p>
+          <p style={styles.sectionSub}>Pending approvals, rejected quotes and approved wedding items.</p>
         </section>
 
         <section id="timeline" style={styles.section}>
           <h3 style={styles.sectionTitle}>Wedding Timeline</h3>
-          <p style={styles.sectionSub}>
-            Planning checklist and key event dates.
-          </p>
-
+          <p style={styles.sectionSub}>Planning checklist and key event dates.</p>
           <div style={styles.timeline}>
             {[
               "Venue confirmed",
@@ -356,10 +644,8 @@ export default function DashboardPage() {
         </section>
 
         <section id="reports" style={styles.section}>
-          <h3 style={styles.sectionTitle}>Business Reports</h3>
-          <p style={styles.sectionSub}>
-            Income statement, budget summary and wedding profitability.
-          </p>
+          <h3 style={styles.sectionTitle}>Reports</h3>
+          <p style={styles.sectionSub}>Income statement, supplier spend and outstanding balance report.</p>
         </section>
       </section>
     </main>
@@ -382,6 +668,23 @@ function formatDate(date?: string) {
     month: "short",
     year: "numeric",
   });
+}
+
+function statusStyle(status: string): React.CSSProperties {
+  const base: React.CSSProperties = {
+    border: "none",
+    borderRadius: 999,
+    padding: "8px 10px",
+    fontWeight: 800,
+  };
+
+  if (status === "Completed") return { ...base, background: "#dcfce7", color: "#166534" };
+  if (status === "Deposit Paid") return { ...base, background: "#ffedd5", color: "#9a3412" };
+  if (status === "Awaiting Quote") return { ...base, background: "#fef9c3", color: "#854d0e" };
+  if (status === "Booked") return { ...base, background: "#dbeafe", color: "#1e40af" };
+  if (status === "Over Budget") return { ...base, background: "#fee2e2", color: "#991b1b" };
+
+  return { ...base, background: "#f1f5f9", color: "#475569" };
 }
 
 const styles: { [key: string]: React.CSSProperties } = {
@@ -451,8 +754,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     overflowX: "hidden",
   },
   header: {
-    background:
-      "linear-gradient(135deg, #ffffff 0%, #fff1f3 50%, #f9dce2 100%)",
+    background: "linear-gradient(135deg, #ffffff 0%, #fff1f3 50%, #f9dce2 100%)",
     border: "1px solid #f1d5d8",
     borderRadius: 28,
     padding: 32,
@@ -500,6 +802,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
     gap: 18,
     marginBottom: 24,
+  },
+  supplierStats: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+    gap: 14,
+    marginBottom: 18,
   },
   statCard: {
     background: "#ffffff",
@@ -585,24 +893,15 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: 16,
     marginBottom: 14,
   },
-  cardTop: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 10,
-    marginBottom: 12,
-  },
   badge: {
+    display: "inline-block",
     background: "#f9e4e7",
     color: "#9b2f43",
     borderRadius: 999,
     padding: "5px 10px",
     fontSize: 12,
     fontWeight: 800,
-  },
-  date: {
-    color: "#8b7280",
-    fontSize: 12,
-    fontWeight: 700,
+    marginBottom: 8,
   },
   cardTitle: {
     fontSize: 20,
@@ -635,18 +934,75 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "9px 10px",
     fontWeight: 700,
   },
-  grid3: {
+  supplierForm: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-    gap: 16,
-  },
-  miniCard: {
+    gap: 12,
+    marginBottom: 24,
+    padding: 16,
     background: "#fff8f6",
     border: "1px solid #f1d5d8",
-    borderRadius: 18,
-    padding: 20,
+    borderRadius: 20,
+  },
+  input: {
+    width: "100%",
+    border: "1px solid #e9c6cc",
+    borderRadius: 14,
+    padding: "12px 14px",
+    fontSize: 14,
+    outline: "none",
+  },
+  inputWide: {
+    width: "100%",
+    border: "1px solid #e9c6cc",
+    borderRadius: 14,
+    padding: "12px 14px",
+    fontSize: 14,
+    outline: "none",
+    gridColumn: "span 2",
+  },
+  textarea: {
+    width: "100%",
+    border: "1px solid #e9c6cc",
+    borderRadius: 14,
+    padding: "12px 14px",
+    fontSize: 14,
+    minHeight: 80,
+    outline: "none",
+    gridColumn: "span 2",
+  },
+  addButton: {
+    background: "#a63d4f",
+    color: "white",
+    border: "none",
+    borderRadius: 14,
+    padding: "12px 16px",
     fontWeight: 800,
+    cursor: "pointer",
+  },
+  filterRow: {
+    display: "flex",
+    gap: 10,
+    flexWrap: "wrap",
+    marginBottom: 18,
+  },
+  filterButton: {
+    border: "1px solid #e9c6cc",
+    background: "white",
     color: "#8f3445",
+    borderRadius: 999,
+    padding: "10px 14px",
+    fontWeight: 800,
+    cursor: "pointer",
+  },
+  filterActive: {
+    border: "1px solid #a63d4f",
+    background: "#a63d4f",
+    color: "white",
+    borderRadius: 999,
+    padding: "10px 14px",
+    fontWeight: 800,
+    cursor: "pointer",
   },
   tableWrap: {
     overflowX: "auto",
