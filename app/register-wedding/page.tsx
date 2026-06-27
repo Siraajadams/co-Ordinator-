@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 
+const packages = ["Full Planning", "Style & Décor Planning"];
+
 export default function RegisterWeddingPage() {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -19,7 +21,7 @@ export default function RegisterWeddingPage() {
     venue_name: "",
     venue_address: "",
     guest_count: "",
-    theme: "Peonies & Blush",
+    theme: "Celebrate Wedding",
     total_budget: "",
     package_name: "Full Planning",
     colour_palette: "Blush, Ivory and Champagne",
@@ -71,15 +73,11 @@ export default function RegisterWeddingPage() {
       <style>{css}</style>
 
       <header className="header">
-        <Link href="/" className="logo">
-          <span className="flower">🌸</span>
-          <span>
-            <strong>Co-Ordinator</strong>
-            <small>WEDDINGS</small>
-          </span>
+        <Link href="/" className="brand">
+          <img src="/celebrate-logo.png" alt="Celebrate Wedding" />
         </Link>
 
-        <nav className="topNav">
+        <nav>
           <Link href="/">Home</Link>
           <Link href="/login">Planner Login</Link>
         </nav>
@@ -88,9 +86,7 @@ export default function RegisterWeddingPage() {
       <section className="layout">
         <aside className="intro">
           <p className="eyebrow">Luxury Wedding Planning CRM</p>
-
           <h1>Register your wedding</h1>
-
           <p className="introText">
             Complete this short registration. Your wedding will be created as a
             CRM profile for the planner to manage quotes, suppliers, budgets and
@@ -98,23 +94,23 @@ export default function RegisterWeddingPage() {
           </p>
 
           <div className="themeCard">
-            <div className="bigFlower">🌸</div>
-            <h3>Peonies & Blush</h3>
+            <img src="/celebrate-logo.png" alt="Celebrate Wedding" />
+            <h3>Celebrate Wedding</h3>
             <p>
-              Soft florals, champagne tones, romantic styling and luxury
-              supplier coordination.
+              Elegant celebration planning, romantic styling, supplier
+              coordination and luxury wedding management.
             </p>
           </div>
 
           <div className="steps">
-            {[1, 2, 3, 4].map((n) => (
+            {["Couple", "Wedding", "Budget", "Inspiration"].map((label, i) => (
               <button
-                key={n}
+                key={label}
                 type="button"
-                onClick={() => setStep(n)}
-                className={step === n ? "active" : ""}
+                onClick={() => setStep(i + 1)}
+                className={step === i + 1 ? "active" : ""}
               >
-                {n}. {["Couple", "Wedding", "Budget", "Inspiration"][n - 1]}
+                {i + 1}. {label}
               </button>
             ))}
           </div>
@@ -122,7 +118,6 @@ export default function RegisterWeddingPage() {
 
         <form onSubmit={submitWedding} className="formCard">
           <h2>Register Your Wedding</h2>
-
           <p className="stepText">Step {step} of 4</p>
 
           <div className="bar">
@@ -132,46 +127,12 @@ export default function RegisterWeddingPage() {
           {step === 1 && (
             <>
               <Section title="Couple Details" />
-
               <div className="grid">
-                <Input
-                  label="Bride Name"
-                  name="bride_name"
-                  value={form.bride_name}
-                  update={update}
-                  required
-                />
-
-                <Input
-                  label="Groom Name"
-                  name="groom_name"
-                  value={form.groom_name}
-                  update={update}
-                  required
-                />
-
-                <Input
-                  label="Contact Person"
-                  name="contact_name"
-                  value={form.contact_name}
-                  update={update}
-                  required
-                />
-
-                <Input
-                  label="Email"
-                  name="email"
-                  value={form.email}
-                  update={update}
-                  required
-                />
-
-                <Input
-                  label="Mobile"
-                  name="mobile"
-                  value={form.mobile}
-                  update={update}
-                />
+                <Input label="Bride Name" name="bride_name" value={form.bride_name} update={update} required />
+                <Input label="Groom Name" name="groom_name" value={form.groom_name} update={update} required />
+                <Input label="Contact Person" name="contact_name" value={form.contact_name} update={update} required />
+                <Input label="Email" name="email" value={form.email} update={update} required />
+                <Input label="Mobile" name="mobile" value={form.mobile} update={update} />
               </div>
             </>
           )}
@@ -179,37 +140,11 @@ export default function RegisterWeddingPage() {
           {step === 2 && (
             <>
               <Section title="Wedding Details" />
-
               <div className="grid">
-                <Input
-                  label="Wedding Date"
-                  name="wedding_date"
-                  type="date"
-                  value={form.wedding_date}
-                  update={update}
-                  required
-                />
-
-                <Input
-                  label="Venue Name"
-                  name="venue_name"
-                  value={form.venue_name}
-                  update={update}
-                />
-
-                <Input
-                  label="Venue Address"
-                  name="venue_address"
-                  value={form.venue_address}
-                  update={update}
-                />
-
-                <Input
-                  label="Guest Count"
-                  name="guest_count"
-                  value={form.guest_count}
-                  update={update}
-                />
+                <Input label="Wedding Date" name="wedding_date" type="date" value={form.wedding_date} update={update} required />
+                <Input label="Venue Name" name="venue_name" value={form.venue_name} update={update} />
+                <Input label="Venue Address" name="venue_address" value={form.venue_address} update={update} />
+                <Input label="Guest Count" name="guest_count" value={form.guest_count} update={update} />
               </div>
             </>
           )}
@@ -217,39 +152,39 @@ export default function RegisterWeddingPage() {
           {step === 3 && (
             <>
               <Section title="Budget & Package" />
-
               <div className="grid">
-                <Input
-                  label="Total Budget"
-                  name="total_budget"
-                  value={form.total_budget}
-                  update={update}
-                />
+                <Input label="Total Budget" name="total_budget" value={form.total_budget} update={update} />
 
-                <div className="field">
+                <div className="field full">
                   <label>Package</label>
-                  <select
-                    value={form.package_name}
-                    onChange={(e) => update("package_name", e.target.value)}
-                  >
-                    <option>Full Planning</option>
-                    <option>Style & Décor Planning</option>
-                    <option>On-the-Day Coordination</option>
-                  </select>
+                  <div className="packageGrid">
+                    {packages.map((item) => (
+                      <button
+                        key={item}
+                        type="button"
+                        className={form.package_name === item ? "package activePackage" : "package"}
+                        onClick={() => update("package_name", item)}
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="field">
+                <div className="field full">
                   <label>Wedding Theme</label>
-                  <select
-                    value={form.theme}
-                    onChange={(e) => update("theme", e.target.value)}
-                  >
-                    <option>Peonies & Blush</option>
-                    <option>White & Gold Luxury</option>
-                    <option>Modern Minimalist</option>
-                    <option>Garden Romance</option>
-                    <option>Classic Elegance</option>
-                  </select>
+                  <div className="packageGrid">
+                    {["Celebrate Wedding", "White & Gold Luxury", "Garden Romance"].map((item) => (
+                      <button
+                        key={item}
+                        type="button"
+                        className={form.theme === item ? "package activePackage" : "package"}
+                        onClick={() => update("theme", item)}
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </>
@@ -258,21 +193,9 @@ export default function RegisterWeddingPage() {
           {step === 4 && (
             <>
               <Section title="Inspiration & Notes" />
-
               <div className="grid">
-                <Input
-                  label="Colour Palette"
-                  name="colour_palette"
-                  value={form.colour_palette}
-                  update={update}
-                />
-
-                <Input
-                  label="Pinterest / Inspiration Link"
-                  name="pinterest_link"
-                  value={form.pinterest_link}
-                  update={update}
-                />
+                <Input label="Colour Palette" name="colour_palette" value={form.colour_palette} update={update} />
+                <Input label="Pinterest / Inspiration Link" name="pinterest_link" value={form.pinterest_link} update={update} />
               </div>
 
               <div className="field">
@@ -288,11 +211,7 @@ export default function RegisterWeddingPage() {
 
           <div className="actions">
             {step > 1 && (
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => setStep(step - 1)}
-              >
+              <button type="button" className="secondary" onClick={() => setStep(step - 1)}>
                 Back
               </button>
             )}
@@ -319,52 +238,20 @@ function Section({ title }: { title: string }) {
   return <h3 className="sectionTitle">{title}</h3>;
 }
 
-function Input({
-  label,
-  name,
-  value,
-  update,
-  type = "text",
-  required = false,
-}: {
-  label: string;
-  name: string;
-  value: string;
-  update: (name: string, value: string) => void;
-  type?: string;
-  required?: boolean;
-}) {
+function Input({ label, name, value, update, type = "text", required = false }: any) {
   return (
     <div className="field">
-      <label>
-        {label} {required && <span>*</span>}
-      </label>
-
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => update(name, e.target.value)}
-        required={required}
-      />
+      <label>{label} {required && <span>*</span>}</label>
+      <input type={type} value={value} onChange={(e) => update(name, e.target.value)} required={required} />
     </div>
   );
 }
 
 const css = `
-* {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  overflow-x: hidden;
-}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; width: 100%; overflow-x: hidden; }
 
 .page {
-  width: 100%;
   min-height: 100vh;
   background: linear-gradient(135deg, #fff8f6, #fff1f4);
   color: #33282d;
@@ -373,51 +260,30 @@ body {
 }
 
 .header {
-  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 20px 6vw;
+  padding: 18px 6vw;
   background: white;
   border-bottom: 1px solid #f1d5d8;
 }
 
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  text-decoration: none;
-  color: #9b3e54;
-}
-
-.logo strong {
+.brand img {
+  width: 230px;
+  max-width: 52vw;
+  height: auto;
   display: block;
-  font-family: Georgia, serif;
-  font-size: 34px;
-  line-height: 1;
 }
 
-.logo small {
-  display: block;
-  letter-spacing: 5px;
-  font-size: 11px;
-  margin-top: 6px;
-  color: #c46b7f;
-}
-
-.flower {
-  font-size: 38px;
-}
-
-.topNav {
+.header nav {
   display: flex;
   gap: 18px;
 }
 
-.topNav a {
+.header nav a {
   color: #6b5f66;
-  font-weight: 700;
+  font-weight: 800;
   text-decoration: none;
 }
 
@@ -425,16 +291,11 @@ body {
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 48px 24px;
+  padding: 46px 24px;
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: 34px;
   align-items: start;
-}
-
-.intro {
-  width: 100%;
-  min-width: 0;
 }
 
 .eyebrow {
@@ -459,7 +320,6 @@ body {
 }
 
 .themeCard {
-  width: 100%;
   background: white;
   border: 1px solid #f0cdd3;
   border-radius: 28px;
@@ -468,8 +328,10 @@ body {
   box-shadow: 0 20px 50px rgba(143,52,69,0.08);
 }
 
-.bigFlower {
-  font-size: 62px;
+.themeCard img {
+  width: 220px;
+  max-width: 100%;
+  margin-bottom: 18px;
 }
 
 .themeCard h3 {
@@ -486,15 +348,14 @@ body {
 }
 
 .steps {
-  width: 100%;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   margin-top: 24px;
 }
 
-.steps button {
-  width: 100%;
+.steps button,
+.package {
   min-height: 58px;
   border-radius: 18px;
   border: 1px solid #eac1c9;
@@ -504,14 +365,14 @@ body {
   font-size: 16px;
 }
 
-.steps button.active {
-  background: #c95675;
-  color: white;
+.steps button.active,
+.activePackage {
+  background: #c95675 !important;
+  color: white !important;
 }
 
 .formCard {
   width: 100%;
-  min-width: 0;
   background: white;
   border: 1px solid #f0cdd3;
   border-radius: 32px;
@@ -554,15 +415,19 @@ body {
 }
 
 .grid {
-  width: 100%;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
 }
 
-.field {
-  width: 100%;
-  min-width: 0;
+.full {
+  grid-column: 1 / -1;
+}
+
+.packageGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .field label {
@@ -573,16 +438,12 @@ body {
   font-size: 15px;
 }
 
-.field label span {
-  color: #c95675;
-}
+.field label span { color: #c95675; }
 
 .field input,
-.field select,
 .field textarea {
   width: 100%;
-  max-width: 100%;
-  min-height: 58px;
+  min-height: 60px;
   border: 1px solid #e8bdc7;
   border-radius: 16px;
   padding: 14px 16px;
@@ -629,59 +490,31 @@ body {
   font-weight: 700;
 }
 
-/* FULL MOBILE RESET */
 @media (max-width: 820px) {
-  .page {
-    width: 100%;
-    overflow-x: hidden;
-  }
-
   .header {
-    width: 100%;
-    padding: 18px 16px;
+    padding: 16px;
     align-items: flex-start;
   }
 
-  .logo {
-    gap: 10px;
+  .brand img {
+    width: 190px;
   }
 
-  .logo strong {
-    font-size: 28px;
-  }
-
-  .logo small {
-    letter-spacing: 3px;
-  }
-
-  .flower {
-    font-size: 34px;
-  }
-
-  .topNav {
+  .header nav {
     flex-direction: column;
     align-items: flex-end;
     gap: 8px;
   }
 
   .layout {
-    width: 100%;
-    max-width: 100%;
     display: flex;
     flex-direction: column;
-    padding: 26px 16px;
+    padding: 24px 16px;
     gap: 24px;
   }
 
-  .intro,
-  .formCard {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-  }
-
   .intro h1 {
-    font-size: 46px;
+    font-size: 42px;
   }
 
   .introText {
@@ -690,21 +523,15 @@ body {
 
   .themeCard {
     padding: 22px;
-    border-radius: 24px;
   }
 
-  .themeCard p {
-    font-size: 16px;
+  .themeCard img {
+    width: 200px;
   }
 
-  .steps {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .steps button {
-    font-size: 14px;
-    min-height: 54px;
+  .grid,
+  .packageGrid {
+    grid-template-columns: 1fr;
   }
 
   .formCard {
@@ -713,24 +540,11 @@ body {
   }
 
   .formCard h2 {
-    font-size: 44px;
+    font-size: 40px;
   }
 
   .sectionTitle {
     font-size: 30px;
-  }
-
-  .grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .field input,
-  .field select,
-  .field textarea {
-    width: 100%;
-    min-height: 60px;
-    font-size: 16px;
   }
 
   .actions {
@@ -739,29 +553,6 @@ body {
 
   .actions button {
     width: 100%;
-  }
-}
-
-@media (max-width: 420px) {
-  .layout {
-    padding: 22px 14px;
-  }
-
-  .intro h1 {
-    font-size: 40px;
-  }
-
-  .formCard h2 {
-    font-size: 40px;
-  }
-
-  .sectionTitle {
-    font-size: 28px;
-  }
-
-  .steps button {
-    font-size: 13px;
-    padding: 8px;
   }
 }
 `;
