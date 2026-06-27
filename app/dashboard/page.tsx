@@ -39,6 +39,9 @@ type Supplier = {
   notes?: string;
   action_required?: string;
   due_date?: string;
+  client_approval_status?: string;
+  client_approval_notes?: string;
+  client_approved_at?: string;
 };
 
 const stages = [
@@ -54,36 +57,12 @@ const stages = [
 ];
 
 const categories = [
-  "Venue",
-  "Catering",
-  "Desserts",
-  "Coffee",
-  "Ice Cream",
-  "Mocktails",
-  "Beverages",
-  "Invitations",
-  "Stationery",
-  "Favours",
-  "Photographer",
-  "Videographer",
-  "Entertainment",
-  "Sound & Lighting",
-  "Live Illustrator",
-  "Florals",
-  "Decor Hire",
-  "Furniture",
-  "Tables",
-  "Table Linen",
-  "Lighting",
-  "Bathrooms",
-  "Transport",
-  "Accommodation",
-  "Hair & Makeup",
-  "Cake",
-  "Celebrant",
-  "Security",
-  "Cleaning",
-  "Other",
+  "Venue", "Catering", "Desserts", "Coffee", "Ice Cream", "Mocktails",
+  "Beverages", "Invitations", "Stationery", "Favours", "Photographer",
+  "Videographer", "Entertainment", "Sound & Lighting", "Live Illustrator",
+  "Florals", "Decor Hire", "Furniture", "Tables", "Table Linen", "Lighting",
+  "Bathrooms", "Transport", "Accommodation", "Hair & Makeup", "Cake",
+  "Celebrant", "Security", "Cleaning", "Other",
 ];
 
 const statuses = [
@@ -95,6 +74,14 @@ const statuses = [
   "Payment to Confirm",
   "Completed",
   "Over Budget",
+];
+
+const approvalStatuses = [
+  "Pending",
+  "Sent to Client",
+  "Approved by Client",
+  "Rejected by Client",
+  "Changes Requested",
 ];
 
 export default function DashboardPage() {
@@ -118,6 +105,8 @@ export default function DashboardPage() {
     deposit_amount: "",
     paid: "",
     status: "Not Started",
+    client_approval_status: "Pending",
+    client_approval_notes: "",
     notes: "",
     action_required: "",
     due_date: "",
@@ -183,6 +172,8 @@ export default function DashboardPage() {
       deposit_amount: Number(supplierForm.deposit_amount || 0),
       paid: Number(supplierForm.paid || 0),
       status: supplierForm.status,
+      client_approval_status: supplierForm.client_approval_status,
+      client_approval_notes: supplierForm.client_approval_notes,
       notes: supplierForm.notes,
       action_required: supplierForm.action_required,
       due_date: supplierForm.due_date || null,
@@ -206,6 +197,8 @@ export default function DashboardPage() {
       deposit_amount: "",
       paid: "",
       status: "Not Started",
+      client_approval_status: "Pending",
+      client_approval_notes: "",
       notes: "",
       action_required: "",
       due_date: "",
@@ -218,6 +211,24 @@ export default function DashboardPage() {
     const { error } = await supabase
       .from("suppliers")
       .update({ status })
+      .eq("id", id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    loadData();
+  }
+
+  async function updateClientApproval(id: string, approvalStatus: string) {
+    const { error } = await supabase
+      .from("suppliers")
+      .update({
+        client_approval_status: approvalStatus,
+        client_approved_at:
+          approvalStatus === "Approved by Client" ? new Date().toISOString() : null,
+      })
       .eq("id", id);
 
     if (error) {
@@ -243,6 +254,9 @@ export default function DashboardPage() {
     if (supplierFilter === "Outstanding Payments") return Number(s.balance_owing || 0) > 0;
     if (supplierFilter === "Deposits Due") return s.deposit_paid !== "Yes";
     if (supplierFilter === "Awaiting Quotes") return s.status === "Awaiting Quote";
+    if (supplierFilter === "Pending Client Approval") return (s.client_approval_status || "Pending") === "Pending";
+    if (supplierFilter === "Approved by Client") return s.client_approval_status === "Approved by Client";
+    if (supplierFilter === "Rejected by Client") return s.client_approval_status === "Rejected by Client";
     if (supplierFilter === "Completed") return s.status === "Completed";
     return true;
   });
@@ -269,6 +283,7 @@ export default function DashboardPage() {
 
   const awaitingQuotes = suppliers.filter((s) => s.status === "Awaiting Quote").length;
   const depositsDue = suppliers.filter((s) => s.deposit_paid !== "Yes").length;
+  const pendingApprovals = suppliers.filter((s) => (s.client_approval_status || "Pending") === "Pending").length;
   const completedSuppliers = suppliers.filter((s) => s.status === "Completed").length;
 
   const pipelineGroups = useMemo(() => {
@@ -308,7 +323,7 @@ export default function DashboardPage() {
             <p style={styles.eyebrow}>Version 2</p>
             <h2 style={styles.title}>Wedding Project Management CRM</h2>
             <p style={styles.subtitle}>
-              Manage weddings, suppliers, payments, balances, notes and approvals.
+              Manage weddings, suppliers, payments, client approvals and balances.
             </p>
           </div>
 
@@ -424,18 +439,28 @@ export default function DashboardPage() {
         <section id="suppliers" style={styles.section}>
           <h3 style={styles.sectionTitle}>Supplier CRM</h3>
           <p style={styles.sectionSub}>
-            Spreadsheet-style wedding supplier tracker with costs, payments, notes and actions.
+            Spreadsheet-style supplier tracker with payments, notes, actions and client approvals.
           </p>
 
           <div style={styles.supplierStats}>
             <StatCard label="Total Suppliers" value={suppliers.length} />
             <StatCard label="Awaiting Quotes" value={awaitingQuotes} />
             <StatCard label="Deposits Due" value={depositsDue} />
+            <StatCard label="Pending Approvals" value={pendingApprovals} />
             <StatCard label="Completed" value={completedSuppliers} />
           </div>
 
           <div style={styles.filterRow}>
-            {["All", "Outstanding Payments", "Deposits Due", "Awaiting Quotes", "Completed"].map((f) => (
+            {[
+              "All",
+              "Outstanding Payments",
+              "Deposits Due",
+              "Awaiting Quotes",
+              "Pending Client Approval",
+              "Approved by Client",
+              "Rejected by Client",
+              "Completed",
+            ].map((f) => (
               <button
                 key={f}
                 onClick={() => setSupplierFilter(f)}
@@ -532,6 +557,21 @@ export default function DashboardPage() {
               ))}
             </select>
 
+            <select
+              value={supplierForm.client_approval_status}
+              onChange={(e) =>
+                setSupplierForm({
+                  ...supplierForm,
+                  client_approval_status: e.target.value,
+                })
+              }
+              style={styles.input}
+            >
+              {approvalStatuses.map((s) => (
+                <option key={s}>{s}</option>
+              ))}
+            </select>
+
             <input
               type="date"
               value={supplierForm.due_date}
@@ -543,6 +583,18 @@ export default function DashboardPage() {
               placeholder="Action Required"
               value={supplierForm.action_required}
               onChange={(e) => setSupplierForm({ ...supplierForm, action_required: e.target.value })}
+              style={styles.inputWide}
+            />
+
+            <input
+              placeholder="Client Approval Notes"
+              value={supplierForm.client_approval_notes}
+              onChange={(e) =>
+                setSupplierForm({
+                  ...supplierForm,
+                  client_approval_notes: e.target.value,
+                })
+              }
               style={styles.inputWide}
             />
 
@@ -567,6 +619,7 @@ export default function DashboardPage() {
                   <th>Paid</th>
                   <th>Balance</th>
                   <th>Status</th>
+                  <th>Client Approval</th>
                   <th>Due</th>
                   <th>Notes</th>
                   <th>Action</th>
@@ -588,6 +641,17 @@ export default function DashboardPage() {
                         style={statusStyle(s.status)}
                       >
                         {statuses.map((status) => (
+                          <option key={status}>{status}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td>
+                      <select
+                        value={s.client_approval_status || "Pending"}
+                        onChange={(e) => updateClientApproval(s.id, e.target.value)}
+                        style={approvalStyle(s.client_approval_status || "Pending")}
+                      >
+                        {approvalStatuses.map((status) => (
                           <option key={status}>{status}</option>
                         ))}
                       </select>
@@ -627,20 +691,6 @@ export default function DashboardPage() {
         <section id="timeline" style={styles.section}>
           <h3 style={styles.sectionTitle}>Wedding Timeline</h3>
           <p style={styles.sectionSub}>Planning checklist and key event dates.</p>
-          <div style={styles.timeline}>
-            {[
-              "Venue confirmed",
-              "Supplier quotes requested",
-              "Client approvals",
-              "Final supplier payments",
-              "Wedding day coordination",
-            ].map((item, index) => (
-              <div key={item} style={styles.timelineItem}>
-                <strong>{index + 1}</strong>
-                <span>{item}</span>
-              </div>
-            ))}
-          </div>
         </section>
 
         <section id="reports" style={styles.section}>
@@ -687,341 +737,67 @@ function statusStyle(status: string): React.CSSProperties {
   return { ...base, background: "#f1f5f9", color: "#475569" };
 }
 
-const styles: { [key: string]: React.CSSProperties } = {
-  page: {
-    minHeight: "100vh",
-    display: "flex",
-    background: "#fff8f6",
-    color: "#2f2933",
-    fontFamily: "Arial, Helvetica, sans-serif",
-  },
-  sidebar: {
-    width: 260,
-    background: "#ffffff",
-    borderRight: "1px solid #f1d5d8",
-    padding: 28,
-    position: "sticky",
-    top: 0,
-    height: "100vh",
-    flexShrink: 0,
-  },
-  logo: {
-    fontFamily: "Georgia, serif",
-    color: "#8f3445",
-    fontSize: 30,
-    margin: 0,
-  },
-  logoSub: {
-    letterSpacing: 5,
-    fontSize: 11,
-    color: "#c76a7c",
-    marginBottom: 36,
-  },
-  nav: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
-  },
-  navItem: {
-    padding: "12px 14px",
-    borderRadius: 14,
-    color: "#6b5c64",
-    fontWeight: 700,
-    textDecoration: "none",
-  },
-  navActive: {
-    padding: "12px 14px",
-    borderRadius: 14,
-    background: "#f9e4e7",
-    color: "#9b2f43",
-    fontWeight: 800,
-    textDecoration: "none",
-  },
-  newButton: {
-    display: "block",
-    marginTop: 30,
-    background: "#a63d4f",
-    color: "white",
-    textAlign: "center",
-    padding: "14px 16px",
-    borderRadius: 16,
-    fontWeight: 800,
-    textDecoration: "none",
-  },
-  content: {
-    flex: 1,
-    padding: 34,
-    overflowX: "hidden",
-  },
-  header: {
-    background: "linear-gradient(135deg, #ffffff 0%, #fff1f3 50%, #f9dce2 100%)",
-    border: "1px solid #f1d5d8",
-    borderRadius: 28,
-    padding: 32,
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 20,
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  eyebrow: {
-    textTransform: "uppercase",
-    letterSpacing: 4,
-    color: "#c35d70",
-    fontSize: 12,
-    fontWeight: 800,
-  },
-  title: {
-    fontFamily: "Georgia, serif",
-    fontSize: 42,
-    margin: "8px 0",
-    color: "#3b2a30",
-  },
-  subtitle: {
-    color: "#715f67",
-    fontSize: 16,
-  },
-  search: {
-    width: 360,
-    maxWidth: "100%",
-    border: "1px solid #e9c6cc",
-    borderRadius: 18,
-    padding: "15px 18px",
-    fontSize: 15,
-    outline: "none",
-  },
-  error: {
-    background: "#fee2e2",
-    color: "#991b1b",
-    padding: 14,
-    borderRadius: 14,
-    marginBottom: 18,
-  },
-  statsGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-    gap: 18,
-    marginBottom: 24,
-  },
-  supplierStats: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-    gap: 14,
-    marginBottom: 18,
-  },
-  statCard: {
-    background: "#ffffff",
-    border: "1px solid #f1d5d8",
-    borderRadius: 22,
-    padding: 22,
-    boxShadow: "0 15px 35px rgba(143, 52, 69, 0.08)",
-  },
-  statLabel: {
-    color: "#8b7280",
-    fontSize: 13,
-    margin: 0,
-    fontWeight: 700,
-  },
-  statValue: {
-    margin: "10px 0 0",
-    fontSize: 28,
-    color: "#8f3445",
-  },
-  section: {
-    background: "#ffffff",
-    border: "1px solid #f1d5d8",
-    borderRadius: 28,
-    padding: 24,
-    marginBottom: 24,
-    boxShadow: "0 15px 35px rgba(143, 52, 69, 0.08)",
-  },
-  sectionHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 26,
-    fontFamily: "Georgia, serif",
-    margin: 0,
-  },
-  sectionSub: {
-    margin: "6px 0 20px",
-    color: "#7c6971",
-  },
-  refreshButton: {
-    border: "1px solid #d99aa6",
-    background: "white",
-    color: "#9b2f43",
-    padding: "11px 16px",
-    borderRadius: 14,
-    fontWeight: 800,
-    cursor: "pointer",
-  },
-  pipeline: {
-    display: "flex",
-    gap: 16,
-    overflowX: "auto",
-    paddingBottom: 14,
-  },
-  column: {
-    minWidth: 310,
-    background: "#fff8f6",
-    border: "1px solid #f1d5d8",
-    borderRadius: 22,
-    padding: 14,
-  },
-  columnHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: 14,
-    color: "#8f3445",
-    fontWeight: 900,
-  },
-  emptyCard: {
-    border: "1px dashed #e3b8bf",
-    borderRadius: 18,
-    padding: 20,
-    color: "#9f8790",
-    textAlign: "center",
-  },
-  card: {
-    background: "#ffffff",
-    border: "1px solid #f1d5d8",
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 14,
-  },
-  badge: {
-    display: "inline-block",
-    background: "#f9e4e7",
-    color: "#9b2f43",
-    borderRadius: 999,
-    padding: "5px 10px",
-    fontSize: 12,
-    fontWeight: 800,
-    marginBottom: 8,
-  },
-  cardTitle: {
-    fontSize: 20,
-    margin: "0 0 12px",
-    color: "#3b2a30",
-  },
-  cardText: {
-    fontSize: 14,
-    color: "#6f5f66",
-    margin: "7px 0",
-  },
-  cardActions: {
-    display: "flex",
-    gap: 10,
-    marginTop: 14,
-  },
-  openButton: {
-    background: "#a63d4f",
-    color: "white",
-    padding: "10px 14px",
-    borderRadius: 12,
-    fontWeight: 800,
-    fontSize: 13,
-    textDecoration: "none",
-  },
-  stageSelect: {
-    flex: 1,
-    border: "1px solid #e9c6cc",
-    borderRadius: 12,
-    padding: "9px 10px",
-    fontWeight: 700,
-  },
-  supplierForm: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-    gap: 12,
-    marginBottom: 24,
-    padding: 16,
-    background: "#fff8f6",
-    border: "1px solid #f1d5d8",
-    borderRadius: 20,
-  },
-  input: {
-    width: "100%",
-    border: "1px solid #e9c6cc",
-    borderRadius: 14,
-    padding: "12px 14px",
-    fontSize: 14,
-    outline: "none",
-  },
-  inputWide: {
-    width: "100%",
-    border: "1px solid #e9c6cc",
-    borderRadius: 14,
-    padding: "12px 14px",
-    fontSize: 14,
-    outline: "none",
-    gridColumn: "span 2",
-  },
-  textarea: {
-    width: "100%",
-    border: "1px solid #e9c6cc",
-    borderRadius: 14,
-    padding: "12px 14px",
-    fontSize: 14,
-    minHeight: 80,
-    outline: "none",
-    gridColumn: "span 2",
-  },
-  addButton: {
-    background: "#a63d4f",
-    color: "white",
+function approvalStyle(status: string): React.CSSProperties {
+  const base: React.CSSProperties = {
     border: "none",
-    borderRadius: 14,
-    padding: "12px 16px",
-    fontWeight: 800,
-    cursor: "pointer",
-  },
-  filterRow: {
-    display: "flex",
-    gap: 10,
-    flexWrap: "wrap",
-    marginBottom: 18,
-  },
-  filterButton: {
-    border: "1px solid #e9c6cc",
-    background: "white",
-    color: "#8f3445",
     borderRadius: 999,
-    padding: "10px 14px",
+    padding: "8px 10px",
     fontWeight: 800,
-    cursor: "pointer",
-  },
-  filterActive: {
-    border: "1px solid #a63d4f",
-    background: "#a63d4f",
-    color: "white",
-    borderRadius: 999,
-    padding: "10px 14px",
-    fontWeight: 800,
-    cursor: "pointer",
-  },
-  tableWrap: {
-    overflowX: "auto",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-  },
-  timeline: {
-    display: "grid",
-    gap: 12,
-  },
-  timelineItem: {
-    display: "flex",
-    gap: 14,
-    alignItems: "center",
-    background: "#fff8f6",
-    border: "1px solid #f1d5d8",
-    borderRadius: 16,
-    padding: 16,
-  },
+  };
+
+  if (status === "Approved by Client") return { ...base, background: "#dcfce7", color: "#166534" };
+  if (status === "Rejected by Client") return { ...base, background: "#fee2e2", color: "#991b1b" };
+  if (status === "Changes Requested") return { ...base, background: "#ffedd5", color: "#9a3412" };
+  if (status === "Sent to Client") return { ...base, background: "#dbeafe", color: "#1e40af" };
+
+  return { ...base, background: "#fef9c3", color: "#854d0e" };
+}
+
+const styles: { [key: string]: React.CSSProperties } = {
+  page: { minHeight: "100vh", display: "flex", background: "#fff8f6", color: "#2f2933", fontFamily: "Arial, Helvetica, sans-serif" },
+  sidebar: { width: 260, background: "#ffffff", borderRight: "1px solid #f1d5d8", padding: 28, position: "sticky", top: 0, height: "100vh", flexShrink: 0 },
+  logo: { fontFamily: "Georgia, serif", color: "#8f3445", fontSize: 30, margin: 0 },
+  logoSub: { letterSpacing: 5, fontSize: 11, color: "#c76a7c", marginBottom: 36 },
+  nav: { display: "flex", flexDirection: "column", gap: 10 },
+  navItem: { padding: "12px 14px", borderRadius: 14, color: "#6b5c64", fontWeight: 700, textDecoration: "none" },
+  navActive: { padding: "12px 14px", borderRadius: 14, background: "#f9e4e7", color: "#9b2f43", fontWeight: 800, textDecoration: "none" },
+  newButton: { display: "block", marginTop: 30, background: "#a63d4f", color: "white", textAlign: "center", padding: "14px 16px", borderRadius: 16, fontWeight: 800, textDecoration: "none" },
+  content: { flex: 1, padding: 34, overflowX: "hidden" },
+  header: { background: "linear-gradient(135deg, #ffffff 0%, #fff1f3 50%, #f9dce2 100%)", border: "1px solid #f1d5d8", borderRadius: 28, padding: 32, display: "flex", justifyContent: "space-between", gap: 20, alignItems: "center", marginBottom: 24 },
+  eyebrow: { textTransform: "uppercase", letterSpacing: 4, color: "#c35d70", fontSize: 12, fontWeight: 800 },
+  title: { fontFamily: "Georgia, serif", fontSize: 42, margin: "8px 0", color: "#3b2a30" },
+  subtitle: { color: "#715f67", fontSize: 16 },
+  search: { width: 360, maxWidth: "100%", border: "1px solid #e9c6cc", borderRadius: 18, padding: "15px 18px", fontSize: 15, outline: "none" },
+  error: { background: "#fee2e2", color: "#991b1b", padding: 14, borderRadius: 14, marginBottom: 18 },
+  statsGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 18, marginBottom: 24 },
+  supplierStats: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 18 },
+  statCard: { background: "#ffffff", border: "1px solid #f1d5d8", borderRadius: 22, padding: 22, boxShadow: "0 15px 35px rgba(143, 52, 69, 0.08)" },
+  statLabel: { color: "#8b7280", fontSize: 13, margin: 0, fontWeight: 700 },
+  statValue: { margin: "10px 0 0", fontSize: 28, color: "#8f3445" },
+  section: { background: "#ffffff", border: "1px solid #f1d5d8", borderRadius: 28, padding: 24, marginBottom: 24, boxShadow: "0 15px 35px rgba(143, 52, 69, 0.08)" },
+  sectionHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
+  sectionTitle: { fontSize: 26, fontFamily: "Georgia, serif", margin: 0 },
+  sectionSub: { margin: "6px 0 20px", color: "#7c6971" },
+  refreshButton: { border: "1px solid #d99aa6", background: "white", color: "#9b2f43", padding: "11px 16px", borderRadius: 14, fontWeight: 800, cursor: "pointer" },
+  pipeline: { display: "flex", gap: 16, overflowX: "auto", paddingBottom: 14 },
+  column: { minWidth: 310, background: "#fff8f6", border: "1px solid #f1d5d8", borderRadius: 22, padding: 14 },
+  columnHeader: { display: "flex", justifyContent: "space-between", marginBottom: 14, color: "#8f3445", fontWeight: 900 },
+  emptyCard: { border: "1px dashed #e3b8bf", borderRadius: 18, padding: 20, color: "#9f8790", textAlign: "center" },
+  card: { background: "#ffffff", border: "1px solid #f1d5d8", borderRadius: 20, padding: 16, marginBottom: 14 },
+  badge: { display: "inline-block", background: "#f9e4e7", color: "#9b2f43", borderRadius: 999, padding: "5px 10px", fontSize: 12, fontWeight: 800, marginBottom: 8 },
+  cardTitle: { fontSize: 20, margin: "0 0 12px", color: "#3b2a30" },
+  cardText: { fontSize: 14, color: "#6f5f66", margin: "7px 0" },
+  cardActions: { display: "flex", gap: 10, marginTop: 14 },
+  openButton: { background: "#a63d4f", color: "white", padding: "10px 14px", borderRadius: 12, fontWeight: 800, fontSize: 13, textDecoration: "none" },
+  stageSelect: { flex: 1, border: "1px solid #e9c6cc", borderRadius: 12, padding: "9px 10px", fontWeight: 700 },
+  supplierForm: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 24, padding: 16, background: "#fff8f6", border: "1px solid #f1d5d8", borderRadius: 20 },
+  input: { width: "100%", border: "1px solid #e9c6cc", borderRadius: 14, padding: "12px 14px", fontSize: 14, outline: "none" },
+  inputWide: { width: "100%", border: "1px solid #e9c6cc", borderRadius: 14, padding: "12px 14px", fontSize: 14, outline: "none", gridColumn: "span 2" },
+  textarea: { width: "100%", border: "1px solid #e9c6cc", borderRadius: 14, padding: "12px 14px", fontSize: 14, minHeight: 80, outline: "none", gridColumn: "span 2" },
+  addButton: { background: "#a63d4f", color: "white", border: "none", borderRadius: 14, padding: "12px 16px", fontWeight: 800, cursor: "pointer" },
+  filterRow: { display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 18 },
+  filterButton: { border: "1px solid #e9c6cc", background: "white", color: "#8f3445", borderRadius: 999, padding: "10px 14px", fontWeight: 800, cursor: "pointer" },
+  filterActive: { border: "1px solid #a63d4f", background: "#a63d4f", color: "white", borderRadius: 999, padding: "10px 14px", fontWeight: 800, cursor: "pointer" },
+  tableWrap: { overflowX: "auto" },
+  table: { width: "100%", borderCollapse: "collapse" },
 };
